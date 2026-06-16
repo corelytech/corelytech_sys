@@ -2218,9 +2218,29 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 <script>
 // ═══════════════════════════════════════════════════════
 // SUPABASE CONFIG
+// ⚠️  ATENÇÃO — SEGURANÇA:
+//   A "anon key" abaixo é pública por design do Supabase,
+//   MAS você DEVE configurar Row-Level Security (RLS) no
+//   painel do Supabase para que ela não exponha dados de
+//   outros usuários. Nunca coloque aqui a "service_role key".
+//   Referência: https://supabase.com/docs/guides/auth/row-level-security
 // ═══════════════════════════════════════════════════════
 const SUPA_URL = 'https://tfrvriqgseobxhujpiaq.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmcnZyaXFnc2VvYnhodWpwaWFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0ODU4MzYsImV4cCI6MjA5NzA2MTgzNn0.JeuctIq-Q7KG4ItYO_owhRT9yEThIn9MZeKcvCrje1M';
+
+// ═══════════════════════════════════════════════════════
+// SEGURANÇA — Sanitização contra XSS
+// Sempre use esc() ao interpolar dados do usuário em HTML
+// ═══════════════════════════════════════════════════════
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
+}
 
 let SUPA_TOKEN = null; // JWT do usuário logado
 let SUPA_UID   = null;
@@ -2567,9 +2587,11 @@ function acInicial(nome) {
 
 /** Destaca o termo buscado em um texto */
 function acHL(texto, termo) {
-  if (!termo || !texto) return texto || '';
-  const re = new RegExp(`(${termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return String(texto).replace(re, '<mark>$1</mark>');
+  const safe = esc(texto);
+  if (!termo || !safe) return safe;
+  const termEsc = esc(termo);
+  const re = new RegExp(`(${termEsc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return safe.replace(re, '<mark>$1</mark>');
 }
 
 /** Conta OS de um cliente pelo nome (case-insensitive) */
@@ -2622,7 +2644,7 @@ function acBuscar(ctx) {
     const ats = acContarOS(c.nome);
     const contato = [c.tel || c.wpp, c.email].filter(Boolean).join(' · ');
     html += `
-      <div class="ac-item" data-cliente-id="${c.id}" onmousedown="acSelecionar(event,'${ctx}',${c.id})">
+      <div class="ac-item" data-cliente-id="${c.id}" onmousedown="acSelecionar(event,'${ctx}','${c.id}')">
         <div class="ac-avatar">${acInicial(c.nome)}</div>
         <div class="ac-item-body">
           <div class="ac-item-name">${acHL(c.nome, termo)}</div>
@@ -2630,7 +2652,7 @@ function acBuscar(ctx) {
         </div>
         <div class="ac-item-right">
           <div class="ac-item-os">${ats > 0 ? ats + ' OS' : '—'}</div>
-          <div class="ac-item-cidade">${c.cidade || ''}</div>
+          <div class="ac-item-cidade">${esc(c.cidade) || ''}</div>
         </div>
       </div>`;
   });
@@ -2722,10 +2744,10 @@ function acExibirVinculado(ctx, c) {
       <div class="ac-vinculado-avatar">${acInicial(c.nome)}</div>
       <div class="ac-vinculado-info">
         <div class="ac-vinculado-nome">
-          ${c.nome}${wppLink}
+          ${esc(c.nome)}${wppLink}
           <span style="font-size:11px;font-weight:400;color:var(--muted)">cliente desde ${c.criado || '—'}</span>
         </div>
-        <div class="ac-vinculado-contato">${contato || 'Sem contato cadastrado'}</div>
+        <div class="ac-vinculado-contato">${esc(contato) || 'Sem contato cadastrado'}</div>
         <div class="ac-vinculado-hist">${histLabel}</div>
       </div>
       <div class="ac-vinculado-actions">
@@ -2830,7 +2852,7 @@ function salvarCliente() {
   if (!nome) { toast('Nome obrigatório', 'error'); return; }
 
   const c = {
-    id:     Date.now(),
+    id: crypto.randomUUID(),
     nome,
     tel:    document.getElementById('c-tel').value.trim(),
     wpp:    document.getElementById('c-wpp').value.trim(),
@@ -2883,9 +2905,9 @@ function renderClientes() {
     return `<tr>
       <td><strong>${hl(c.nome, termo)}</strong>${wpp}<br><span style="color:var(--muted);font-size:11px">${hl(c.email, termo) || ''}</span></td>
       <td>${hl(c.tel || c.wpp, termo) || '—'}</td>
-      <td>${c.cidade || '—'}</td>
+      <td>${esc(c.cidade) || '—'}</td>
       <td><span style="color:var(--teal);font-family:var(--mono)">${ats}</span></td>
-      <td><button class="btn btn-sm btn-secondary" onclick="excluirCliente(${c.id})">Excluir</button></td>
+      <td><button class="btn btn-sm btn-secondary" onclick="excluirCliente('${c.id}')">Excluir</button></td>
     </tr>`;
   }).join('');
 }
@@ -2942,7 +2964,7 @@ function salvarOS() {
   const acess = [...document.querySelectorAll('.ac-acess:checked')].map(c => c.value);
 
   const os = {
-    id:          Date.now(),
+    id: crypto.randomUUID(),
     num,
     cliente:     clienteNome,
     clienteId:   clienteId || null,
@@ -2992,12 +3014,12 @@ function renderOrdens() {
     <tr>
       <td class="td-mono">${hl(o.num, termo)}</td>
       <td><strong>${hl(o.cliente, termo)}</strong></td>
-      <td>${o.equip}${o.marca ? ' — ' + o.marca : ''}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.defeito}</td>
-      <td><span class="badge ${o.status}"><span class="badge-dot"></span>${STATUS_LABEL[o.status] || o.status}</span></td>
-      <td style="color:var(--muted);font-size:12px">${o.data}</td>
+      <td>${esc(o.equip)}${o.marca ? ' — ' + esc(o.marca) : ''}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.defeito)}</td>
+      <td><span class="badge ${esc(o.status)}"><span class="badge-dot"></span>${STATUS_LABEL[o.status] || esc(o.status)}</span></td>
+      <td style="color:var(--muted);font-size:12px">${esc(o.data)}</td>
       <td>
-        <select onchange="mudarStatus(${o.id},this.value)"
+        <select onchange="mudarStatus('${o.id}',this.value)"
           style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:12px;padding:4px 6px;cursor:pointer">
           ${Object.entries(STATUS_LABEL).map(([v,l]) =>
             `<option value="${v}" ${v === o.status ? 'selected' : ''}>${l}</option>`
@@ -3033,7 +3055,7 @@ function abrirOrcamento() {
 function addServico() {
   const sel  = document.getElementById('orc-servico-sel');
   const [nome, preco] = sel.value.split('|');
-  orcItens.push({ id: Date.now(), nome, preco: parseFloat(preco) });
+  orcItens.push({ id: crypto.randomUUID(), nome, preco: parseFloat(preco) });
   renderOrcItens();
 }
 
@@ -3053,12 +3075,12 @@ function renderOrcItens() {
   }
   el.innerHTML = orcItens.map(i => `
     <div class="orcamento-item">
-      <span>${i.nome}</span>
-      <input type="number" value="${i.preco}" onchange="updatePreco(${i.id},this.value)"
+      <span>${esc(i.nome)}</span>
+      <input type="number" value="${i.preco}" onchange="updatePreco('${i.id}',this.value)"
         style="width:90px;background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);padding:4px 8px;font-family:var(--mono);text-align:right">
       <span style="color:var(--muted);font-size:12px">R$</span>
       <span style="font-family:var(--mono);color:var(--teal)">${i.preco.toFixed(2).replace('.', ',')}</span>
-      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="removeServico(${i.id})">✕</button>
+      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="removeServico('${i.id}')">✕</button>
     </div>`).join('');
   calcTotal();
 }
@@ -3085,7 +3107,7 @@ function salvarOrcamento() {
   const desc = parseFloat(document.getElementById('orc-desc').value) || 0;
 
   const orc = {
-    id:        Date.now(),
+    id: crypto.randomUUID(),
     num,
     cliente:   clienteNome,
     clienteId: clienteId || null,
@@ -3127,12 +3149,12 @@ function renderOrcamentos() {
     <tr>
       <td class="td-mono">${hl(o.num, termo)}</td>
       <td><strong>${hl(o.cliente, termo)}</strong></td>
-      <td style="color:var(--muted);font-size:12px">${o.data || '—'}</td>
-      <td>${o.itens.map(i => `<span class="tag">${i.nome}</span>`).join('')}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(o.data) || '—'}</td>
+      <td>${o.itens.map(i => `<span class="tag">${esc(i.nome)}</span>`).join('')}</td>
       <td style="font-family:var(--mono);color:var(--teal)">R$ ${o.total.toFixed(2).replace('.', ',')}</td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="verOrcamento(${o.id})">Ver</button>
-        <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none;margin-left:4px" onclick="excluirOrcamento(${o.id})">✕</button>
+        <button class="btn btn-sm btn-secondary" onclick="verOrcamento('${o.id}')">Ver</button>
+        <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none;margin-left:4px" onclick="excluirOrcamento('${o.id}')">✕</button>
       </td>
     </tr>`).join('');
 }
@@ -3177,7 +3199,8 @@ function imprimirOrcamento() {
 }
 
 function gerarHTMLOrcamento(o) {
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Orçamento ${o.num}</title>
+  // esc() em todos os campos vindos do usuário para evitar XSS
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Orçamento ${esc(o.num)}</title>
   <style>body{font-family:Arial,sans-serif;max-width:720px;margin:40px auto;color:#222;font-size:14px}
   h1{color:#6C5CE7;font-size:24px;margin-bottom:4px}.sub{color:#666;font-size:12px;margin-bottom:24px}
   table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#f5f5f5;padding:10px;text-align:left;font-size:12px;text-transform:uppercase}
@@ -3185,13 +3208,13 @@ function gerarHTMLOrcamento(o) {
   .footer{margin-top:40px;padding-top:16px;border-top:1px solid #eee;color:#999;font-size:11px}
   @media print{body{margin:20px}}</style></head><body>
   <h1>CorelyTech</h1>
-  <div class="sub">Orçamento Nº ${o.num} · ${o.data || ''} · Cliente: ${o.cliente}</div>
+  <div class="sub">Orçamento Nº ${esc(o.num)} · ${esc(o.data || '')} · Cliente: ${esc(o.cliente)}</div>
   <table><thead><tr><th>Serviço</th><th style="text-align:right">Valor</th></tr></thead><tbody>
-  ${o.itens.map(i => `<tr><td>${i.nome}</td><td style="text-align:right;font-weight:600">R$ ${i.preco.toFixed(2).replace('.', ',')}</td></tr>`).join('')}
+  ${o.itens.map(i => `<tr><td>${esc(i.nome)}</td><td style="text-align:right;font-weight:600">R$ ${i.preco.toFixed(2).replace('.', ',')}</td></tr>`).join('')}
   </tbody></table>
   ${o.desconto ? `<p style="text-align:right;color:#E17055">Desconto: - R$ ${o.desconto.toFixed(2).replace('.', ',')}</p>` : ''}
   <p style="text-align:right" class="total">Total: R$ ${o.total.toFixed(2).replace('.', ',')}</p>
-  ${o.obs ? `<p style="color:#666;margin-top:12px">Obs: ${o.obs}</p>` : ''}
+  ${o.obs ? `<p style="color:#666;margin-top:12px">Obs: ${esc(o.obs)}</p>` : ''}
   <div class="footer">CorelyTech — Hardware inteligente. Compra segura. · @corelytech</div>
   <script>window.onload=()=>window.print()<\/script></body></html>`;
 }
@@ -3217,7 +3240,7 @@ function salvarLaudo() {
     drivers:   document.getElementById('chk-drivers').checked,
   };
   const l = {
-    id: Date.now(), num, cliente: cli,
+    id: crypto.randomUUID(), num, cliente: cli,
     data:    document.getElementById('l-data').value,
     equip: {
       cpu:      document.getElementById('l-cpu').value,
@@ -3272,14 +3295,14 @@ function renderLaudos() {
   const COR = { 'Aprovado': 'var(--green)', 'Aprovado com ressalvas': 'var(--amber)', 'Reprovado': 'var(--red)' };
   tb.innerHTML = DB.laudos.slice().reverse().map(l => `
     <tr>
-      <td class="td-mono">${l.num}</td>
-      <td><strong>${l.cliente}</strong></td>
-      <td>${l.equip.cpu || '—'}${l.equip.gpu ? ' / ' + l.equip.gpu : ''}</td>
-      <td style="color:var(--muted);font-size:12px">${l.data || '—'}</td>
-      <td style="color:${COR[l.resultado] || 'var(--muted)'};font-weight:600">${l.resultado || '—'}</td>
+      <td class="td-mono">${esc(l.num)}</td>
+      <td><strong>${esc(l.cliente)}</strong></td>
+      <td>${esc(l.equip.cpu) || '—'}${l.equip.gpu ? ' / ' + esc(l.equip.gpu) : ''}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(l.data) || '—'}</td>
+      <td style="color:${COR[l.resultado] || 'var(--muted)'};font-weight:600">${esc(l.resultado) || '—'}</td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="verLaudo(${l.id})">Ver PDF</button>
-        <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none;margin-left:4px" onclick="excluirLaudo(${l.id})">✕</button>
+        <button class="btn btn-sm btn-secondary" onclick="verLaudo('${l.id}')">Ver PDF</button>
+        <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none;margin-left:4px" onclick="excluirLaudo('${l.id}')">✕</button>
       </td>
     </tr>`).join('');
 }
@@ -3297,9 +3320,12 @@ function verLaudo(id) {
 
 function gerarHTMLLaudo(l) {
   const chk  = v => v ? '✅' : '☐';
-  const row  = (label, val) => val ? `<tr><td style="width:200px;color:#666;font-size:12px">${label}</td><td style="font-weight:500">${val}</td></tr>` : '';
+  // esc() em val para evitar XSS vindo de campos de texto livre
+  const row  = (label, val) => val ? `<tr><td style="width:200px;color:#666;font-size:12px">${label}</td><td style="font-weight:500">${esc(val)}</td></tr>` : '';
   const COR  = { 'Aprovado': '#00B894', 'Aprovado com ressalvas': '#FDCB6E', 'Reprovado': '#E17055' };
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laudo ${l.num}</title>
+  // resultado só pode ser um dos valores do select, mas sanitizamos para garantir
+  const resultadoSafe = COR[l.resultado] ? l.resultado : '—';
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laudo ${esc(l.num)}</title>
   <style>body{font-family:Arial,sans-serif;max-width:760px;margin:32px auto;color:#222;font-size:13px}
   h1{color:#6C5CE7;font-size:22px;margin-bottom:2px}.sub{color:#888;font-size:12px;margin-bottom:20px}
   h3{color:#3C3489;font-size:14px;margin:20px 0 8px;padding-bottom:6px;border-bottom:2px solid #eee}
@@ -3309,7 +3335,7 @@ function gerarHTMLLaudo(l) {
   .footer{margin-top:40px;padding-top:12px;border-top:1px solid #eee;color:#aaa;font-size:11px}
   @media print{body{margin:16px}}</style></head><body>
   <h1>CorelyTech — Laudo Técnico</h1>
-  <div class="sub">Nº ${l.num} · ${l.data||''} · Cliente: ${l.cliente} · Técnico: ${l.tecnico||'CorelyTech'}</div>
+  <div class="sub">Nº ${esc(l.num)} · ${esc(l.data||'')} · Cliente: ${esc(l.cliente)} · Técnico: ${esc(l.tecnico||'CorelyTech')}</div>
   <h3>Configuração do Equipamento</h3>
   <table>${row('Processador',l.equip.cpu)}${row('Placa-mãe',l.equip.mobo)}${row('Memória RAM',l.equip.ram)}${row('Armazenamento',l.equip.storage)}${row('Placa de vídeo',l.equip.gpu)}${row('Fonte',l.equip.fonte)}${row('Gabinete',l.equip.gabinete)}</table>
   <h3>Testes de CPU</h3>
@@ -3327,8 +3353,8 @@ function gerarHTMLLaudo(l) {
     <tr><td>${chk(l.checklist.trav)} Sem travamentos</td><td>${chk(l.checklist.drivers)} Drivers instalados</td></tr>
   </table>
   <h3>Conclusão Técnica</h3>
-  <p style="background:#f9f9f9;padding:12px 16px;border-radius:6px;border-left:4px solid #6C5CE7">${l.conclusao||'—'}</p>
-  <div style="margin-top:20px"><span class="result">${l.resultado}</span></div>
+  <p style="background:#f9f9f9;padding:12px 16px;border-radius:6px;border-left:4px solid #6C5CE7">${esc(l.conclusao||'—')}</p>
+  <div style="margin-top:20px"><span class="result">${esc(resultadoSafe)}</span></div>
   <div class="footer">CorelyTech · @corelytech · Hardware inteligente. Compra segura.</div>
   <script>window.onload=()=>window.print()<\/script></body></html>`;
 }
@@ -3356,7 +3382,7 @@ function salvarGarantia() {
   const venc  = new Date(data + 'T12:00:00');
   venc.setDate(venc.getDate() + prazo);
   const g = {
-    id:         Date.now(),
+    id: crypto.randomUUID(),
     numVenda:   document.getElementById('g-numvenda').value.trim(),
     produto:    prod,
     cliente:    document.getElementById('g-cliente').value.trim(),
@@ -3444,30 +3470,30 @@ function renderGarantias() {
         <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">📋 Ocorrências (${g.ocorrencias.length})</div>
         ${g.ocorrencias.map((oc,i) => `
           <div class="oc-item">
-            <strong>${i+1}. ${oc.desc}</strong>
-            <span>${fmtDataGar(oc.data)}${oc.acao ? ' · Ação: ' + oc.acao : ''}</span>
+            <strong>${i+1}. ${esc(oc.desc)}</strong>
+            <span>${esc(fmtDataGar(oc.data))}${oc.acao ? ' · Ação: ' + esc(oc.acao) : ''}</span>
           </div>`).join('')}
       </div>` : '';
 
     const botoes = g.status === 'finalizada' ? `
-      <button class="btn btn-sm btn-secondary" onclick="gerarTermoPDF(${g.id})">📄 Termo PDF</button>
-      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirGarantia(${g.id})">✕ Remover</button>` : `
-      <button class="btn btn-sm btn-secondary" onclick="abrirOcorrencia(${g.id})">📝 Registrar ocorrência</button>
-      <button class="btn btn-sm btn-secondary" onclick="gerarTermoPDF(${g.id})">📄 Termo PDF</button>
-      <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green)" onclick="abrirFinalizarGarantia(${g.id})">✓ Finalizar</button>
-      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirGarantia(${g.id})">✕</button>`;
+      <button class="btn btn-sm btn-secondary" onclick="gerarTermoPDF('${g.id}')">📄 Termo PDF</button>
+      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirGarantia('${g.id}')">✕ Remover</button>` : `
+      <button class="btn btn-sm btn-secondary" onclick="abrirOcorrencia('${g.id}')">📝 Registrar ocorrência</button>
+      <button class="btn btn-sm btn-secondary" onclick="gerarTermoPDF('${g.id}')">📄 Termo PDF</button>
+      <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green)" onclick="abrirFinalizarGarantia('${g.id}')">✓ Finalizar</button>
+      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirGarantia('${g.id}')">✕</button>`;
 
     return `<div class="garantia-card ${g.classeCard}">
       <div class="garantia-header">
         <div class="garantia-icon ${g.classeCard}">${icones[g.classeCard]||'🛡️'}</div>
         <div class="garantia-info">
           <h4>${hl(g.produto, termo)}${g.numVenda ? ` <span class="numvenda-badge">${hl(g.numVenda,termo)}</span>` : ''}</h4>
-          <p>Cliente: <strong>${hl(g.cliente,termo)||'—'}</strong> · S/N: ${g.serial||'—'}</p>
+          <p>Cliente: <strong>${hl(g.cliente,termo)||'—'}</strong> · S/N: ${esc(g.serial)||'—'}</p>
           <div class="garantia-meta">
             <span style="font-size:11px;color:var(--muted2)">🗓 Venda: ${fmtDataGar(g.dataVenda)}</span>
             <span style="font-size:11px;color:var(--muted2)">⏱ Prazo: ${g.prazo} dias</span>
             <span style="font-size:11px;color:var(--muted2)">📅 Vence: ${fmtDataGar(g.vencimento)}</span>
-            ${g.obs ? `<span style="font-size:11px;color:var(--muted);font-style:italic">${g.obs}</span>` : ''}
+            ${g.obs ? `<span style="font-size:11px;color:var(--muted);font-style:italic">${esc(g.obs)}</span>` : ''}
           </div>
         </div>
         <div class="garantia-dias">
@@ -3502,7 +3528,7 @@ function abrirOcorrencia(id) {
   const g = DB.garantias.find(x => x.id === id);
   if (!g) return;
   document.getElementById('oc-garantia-info').innerHTML =
-    `<strong>${g.produto}</strong> · Cliente: ${g.cliente||'—'} · Vence em: ${fmtDataGar(g.vencimento)}`;
+    `<strong>${esc(g.produto)}</strong> · Cliente: ${esc(g.cliente)||'—'} · Vence em: ${esc(fmtDataGar(g.vencimento))}`;
   document.getElementById('oc-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('oc-desc').value = '';
   document.getElementById('oc-acao').value = '';
@@ -3532,7 +3558,7 @@ function abrirFinalizarGarantia(id) {
   const g = DB.garantias.find(x => x.id === id);
   if (!g) return;
   document.getElementById('fin-garantia-info').innerHTML =
-    `<strong>${g.produto}</strong> · Cliente: ${g.cliente||'—'} · ${g.ocorrencias?.length||0} ocorrência(s) registrada(s)`;
+    `<strong>${esc(g.produto)}</strong> · Cliente: ${esc(g.cliente)||'—'} · ${g.ocorrencias?.length||0} ocorrência(s) registrada(s)`;
   document.getElementById('fin-motivo').selectedIndex = 0;
   document.getElementById('fin-obs').value = '';
   openModal('modal-finalizar-garantia');
@@ -3564,14 +3590,14 @@ function gerarTermoPDF(id) {
     <table>${g.ocorrencias.map((oc,i)=>`
       <tr>
         <td style="width:100px;color:#666;font-size:12px">${fmtDataGar(oc.data)}</td>
-        <td><strong>${oc.desc}</strong>${oc.acao?`<br><span style="color:#666;font-size:12px">Ação: ${oc.acao}</span>`:''}</td>
+        <td><strong>${esc(oc.desc)}</strong>${oc.acao?`<br><span style="color:#666;font-size:12px">Ação: ${esc(oc.acao)}</span>`:''}</td>
       </tr>`).join('')}
     </table>` : '';
   const finHTML = g.finalizacao ? `
     <div style="background:#f0f9f0;border:1px solid #00B894;border-radius:6px;padding:12px 16px;margin-top:20px">
       <strong style="color:#00B894">✓ Garantia Finalizada</strong><br>
-      <span style="font-size:12px;color:#555">Data: ${fmtDataGar(g.finalizacao.data)} · Motivo: ${g.finalizacao.motivo}</span>
-      ${g.finalizacao.obs?`<br><span style="font-size:12px;color:#666">${g.finalizacao.obs}</span>`:''}
+      <span style="font-size:12px;color:#555">Data: ${esc(fmtDataGar(g.finalizacao.data))} · Motivo: ${esc(g.finalizacao.motivo)}</span>
+      ${g.finalizacao.obs?`<br><span style="font-size:12px;color:#666">${esc(g.finalizacao.obs)}</span>`:''}
     </div>` : '';
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Termo de Garantia</title>
   <style>
@@ -3592,20 +3618,20 @@ function gerarTermoPDF(id) {
   <div class="sub">Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
   <h3>Dados da Garantia</h3>
   <table>
-    ${g.numVenda?`<tr><td class="td-label">Número da venda</td><td><strong>${g.numVenda}</strong></td></tr>`:''}
-    <tr><td class="td-label">Produto</td><td><strong>${g.produto}</strong></td></tr>
-    <tr><td class="td-label">Cliente</td><td>${g.cliente||'—'}</td></tr>
-    <tr><td class="td-label">Número de série</td><td>${g.serial||'—'}</td></tr>
-    <tr><td class="td-label">Data da venda</td><td>${fmtDataGar(g.dataVenda)}</td></tr>
+    ${g.numVenda?`<tr><td class="td-label">Número da venda</td><td><strong>${esc(g.numVenda)}</strong></td></tr>`:''}
+    <tr><td class="td-label">Produto</td><td><strong>${esc(g.produto)}</strong></td></tr>
+    <tr><td class="td-label">Cliente</td><td>${esc(g.cliente)||'—'}</td></tr>
+    <tr><td class="td-label">Número de série</td><td>${esc(g.serial)||'—'}</td></tr>
+    <tr><td class="td-label">Data da venda</td><td>${esc(fmtDataGar(g.dataVenda))}</td></tr>
     <tr><td class="td-label">Prazo de garantia</td><td>${g.prazo} dias</td></tr>
-    <tr><td class="td-label">Válida até</td><td><strong>${fmtDataGar(g.vencimento)}</strong></td></tr>
+    <tr><td class="td-label">Válida até</td><td><strong>${esc(fmtDataGar(g.vencimento))}</strong></td></tr>
     <tr><td class="td-label">Status</td><td><span class="stamp">${g.status === 'finalizada' ? '✓ FINALIZADA' : '🛡️ ATIVA'}</span></td></tr>
-    ${g.obs?`<tr><td class="td-label">Condições</td><td>${g.obs}</td></tr>`:''}
+    ${g.obs?`<tr><td class="td-label">Condições</td><td>${esc(g.obs)}</td></tr>`:''}
   </table>
   ${ocHTML}
   ${finHTML}
   <div class="assinatura">
-    <div>Assinatura do cliente<br>${g.cliente||'_______________________'}</div>
+    <div>Assinatura do cliente<br>${esc(g.cliente)||'_______________________'}</div>
     <div>CorelyTech — Técnico responsável<br>_______________________</div>
   </div>
   <div class="footer">
@@ -3830,11 +3856,11 @@ function renderDashboard() {
     ? recentes.map(o => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="min-width:0">
-          <span style="font-family:var(--mono);font-size:11px;color:var(--teal)">${o.num||''}</span>
-          <strong style="margin-left:8px;font-size:13px">${o.cliente||''}</strong>
-          <div style="color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.equip||''}</div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--teal)">${esc(o.num)||''}</span>
+          <strong style="margin-left:8px;font-size:13px">${esc(o.cliente)||''}</strong>
+          <div style="color:var(--muted);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.equip)||''}</div>
         </div>
-        <span class="badge ${o.status}" style="flex-shrink:0;margin-left:10px"><span class="badge-dot"></span>${STATUS_LABEL[o.status]||o.status}</span>
+        <span class="badge ${esc(o.status)}" style="flex-shrink:0;margin-left:10px"><span class="badge-dot"></span>${STATUS_LABEL[o.status]||esc(o.status)}</span>
       </div>`).join('')
     : '<div class="empty-state"><p>Nenhuma OS cadastrada</p></div>';
 
@@ -3846,8 +3872,8 @@ function renderDashboard() {
     ? retirada.map(o => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
         <div>
-          <strong style="font-size:13px">${o.cliente||''}</strong>
-          <div style="color:var(--muted);font-size:12px;margin-top:2px">${o.equip||''}</div>
+          <strong style="font-size:13px">${esc(o.cliente)||''}</strong>
+          <div style="color:var(--muted);font-size:12px;margin-top:2px">${esc(o.equip)||''}</div>
         </div>
         <span class="badge finalizado" style="flex-shrink:0"><span class="badge-dot"></span>Pronto</span>
       </div>`).join('')
@@ -3920,8 +3946,8 @@ function renderDashboard() {
         const stCor  = v.status==='Concluída' ? 'var(--green)' : v.status==='Cancelada' ? 'var(--red)' : 'var(--amber)';
         return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
           <div style="min-width:0">
-            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.produto||'—'}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:1px">${v.cliente||''} ${v.data ? '· '+v.data.split('-').reverse().join('/') : ''}</div>
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(v.produto)||'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:1px">${esc(v.cliente)||''} ${v.data ? '· '+esc(v.data.split('-').reverse().join('/')) : ''}</div>
           </div>
           <div style="text-align:right;flex-shrink:0;margin-left:12px">
             <div style="font-family:var(--mono);font-weight:700;color:var(--green);font-size:13px">${brl(v.valor||0)}</div>
@@ -3943,8 +3969,8 @@ function renderDashboard() {
     ? topEstoque.map(p => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
         <div style="min-width:0">
-          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nome||p.descricao||'—'}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">${p.categoria||p.tipo||''}</div>
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.nome||p.descricao)||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">${esc(p.categoria||p.tipo)||''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:12px">
           <div style="font-family:var(--mono);font-weight:700;color:var(--amber);font-size:13px">${brl(p.anunciado||p.preco||0)}</div>
@@ -3969,7 +3995,7 @@ function salvarServico() {
     const s = DB.servicos.find(x => x.id == editId);
     if (s) { s.nome = nome; s.categoria = cat; s.valor = valor; s.desc = desc; }
   } else {
-    DB.servicos.push({ id: Date.now(), nome, categoria: cat, valor, desc });
+    DB.servicos.push({ id: crypto.randomUUID(), nome, categoria: cat, valor, desc });
   }
   save('servicos');
   cancelarEdicao();
@@ -4026,12 +4052,12 @@ function renderConfigServicos() {
       ${lista.map(s => `
         <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px">
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.nome}</div>
-            ${s.desc ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${s.desc}</div>` : ''}
+            <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.nome)}</div>
+            ${s.desc ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${esc(s.desc)}</div>` : ''}
           </div>
           <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--teal);white-space:nowrap">R$ ${s.valor.toFixed(2).replace('.', ',')}</div>
-          <button class="btn btn-sm btn-secondary" onclick="editarServico(${s.id})">✏️</button>
-          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirServico(${s.id})">✕</button>
+          <button class="btn btn-sm btn-secondary" onclick="editarServico('${s.id}')">✏️</button>
+          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirServico('${s.id}')">✕</button>
         </div>`).join('')}
     </div>`).join('');
 }
@@ -4041,8 +4067,8 @@ function atualizarSelectServicos() {
   const grupos = {};
   DB.servicos.forEach(s => { if (!grupos[s.categoria]) grupos[s.categoria]=[]; grupos[s.categoria].push(s); });
   sel.innerHTML = Object.entries(grupos).map(([cat, lista]) => `
-    <optgroup label="${cat}">
-      ${lista.map(s => `<option value="${s.nome}|${s.valor}">${s.nome} — R$ ${s.valor.toFixed(2).replace('.', ',')}</option>`).join('')}
+    <optgroup label="${esc(cat)}">
+      ${lista.map(s => `<option value="${esc(s.nome)}|${s.valor}">${esc(s.nome)} — R$ ${s.valor.toFixed(2).replace('.', ',')}</option>`).join('')}
     </optgroup>`).join('');
 }
 
@@ -4272,7 +4298,7 @@ function salvarProduto() {
   const anunciado = parseFloat(document.getElementById('p-vlanunciado').value) || 0;
 
   const produto = {
-    id:          editId ? parseInt(editId) : Date.now(),
+    id:          editId ? editId : crypto.randomUUID(),
     nome, categoria: cat,
     marca:       document.getElementById('p-marca').value,
     modelo:      document.getElementById('p-modelo').value,
@@ -4290,11 +4316,11 @@ function salvarProduto() {
     aquisicao:   document.getElementById('p-aquisicao').value,
     status,
     obs:         document.getElementById('p-obs').value,
-    criado:      editId ? (DB.estoque.find(x => x.id === parseInt(editId))?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
+    criado:      editId ? (DB.estoque.find(x => x.id === editId)?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
   };
 
   if (editId) {
-    const idx = DB.estoque.findIndex(x => x.id === parseInt(editId));
+    const idx = DB.estoque.findIndex(x => x.id === editId);
     if (idx >= 0) DB.estoque[idx] = produto;
   } else {
     DB.estoque.push(produto);
@@ -4383,22 +4409,22 @@ function renderEstoque() {
         <strong>${hl(p.nome, termo)}</strong>
         ${p.marca||p.modelo ? `<br><span style="color:var(--muted);font-size:11px">${hl((p.marca||'')+(p.modelo?' '+p.modelo:''), termo)}</span>` : ''}
       </td>
-      <td><span style="font-size:12px;color:var(--muted2)">${p.categoria||'—'}</span></td>
-      <td><span style="font-size:11px;font-weight:600;color:${corEstado}">${p.estado||'—'}</span></td>
+      <td><span style="font-size:12px;color:var(--muted2)">${esc(p.categoria)||'—'}</span></td>
+      <td><span style="font-size:11px;font-weight:600;color:${corEstado}">${esc(p.estado)||'—'}</span></td>
       <td>
         <span style="display:inline-flex;align-items:center;gap:4px;background:${bgStatus};color:${corStatus};padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600">
-          ${p.status}
+          ${esc(p.status)}
         </span>
       </td>
       <td style="font-family:var(--mono);font-size:12px;color:var(--muted2)">R$ ${(p.vlPago||0).toFixed(2).replace('.',',')}</td>
       <td style="font-family:var(--mono);font-size:12px;color:var(--teal);font-weight:600">R$ ${(p.vlAnunciado||0).toFixed(2).replace('.',',')}</td>
       <td style="font-size:12px">${lucroStr}</td>
       <td style="white-space:nowrap">
-        <select onchange="mudarStatusProduto(${p.id},this.value)" style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:11px;padding:3px 5px;cursor:pointer;margin-right:4px">
+        <select onchange="mudarStatusProduto('${p.id}',this.value)" style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:11px;padding:3px 5px;cursor:pointer;margin-right:4px">
           ${['Em estoque','Reservado','Vendido','Consignado','Em manutenção','Em testes'].map(s=>`<option value="${s}" ${s===p.status?'selected':''}>${s}</option>`).join('')}
         </select>
-        <button class="btn btn-sm btn-secondary" onclick="editarProduto(${p.id})" style="padding:4px 8px;font-size:11px">✏️</button>
-        <button class="btn btn-sm" onclick="excluirProduto(${p.id})" style="background:var(--red-dim);color:var(--red);border:none;padding:4px 8px;font-size:11px;margin-left:2px">✕</button>
+        <button class="btn btn-sm btn-secondary" onclick="editarProduto('${p.id}')" style="padding:4px 8px;font-size:11px">✏️</button>
+        <button class="btn btn-sm" onclick="excluirProduto('${p.id}')" style="background:var(--red-dim);color:var(--red);border:none;padding:4px 8px;font-size:11px;margin-left:2px">✕</button>
       </td>
     </tr>`;
   }).join('');
@@ -4453,9 +4479,11 @@ function toast(msg, type = 'success') {
 }
 
 function hl(texto, termo) {
-  if (!termo || !texto) return texto || '';
-  const re = new RegExp(`(${termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return String(texto).replace(re, '<mark>$1</mark>');
+  const safe = esc(texto);
+  if (!termo || !safe) return safe;
+  const termEsc = esc(termo);
+  const re = new RegExp(`(${termEsc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return safe.replace(re, '<mark>$1</mark>');
 }
 
 function setCount(id, visivel, total) {
@@ -4721,7 +4749,7 @@ function abrirAnuncio(prodIdRaw) {
     : `<div class="anuncio-sem-foto">
         <span style="font-size:40px;opacity:.3">📷</span>
         <span>Nenhuma foto cadastrada</span>
-        <button class="btn btn-sm btn-secondary" onclick="fecharAnuncio();editarProduto(${p.id||0})">+ Adicionar fotos</button>
+        <button class="btn btn-sm btn-secondary" onclick="fecharAnuncio();editarProduto('${p.id||0}')">+ Adicionar fotos</button>
        </div>`;
 
   const lucro = p.vlAnunciado - p.vlPago;
@@ -4739,7 +4767,7 @@ function abrirAnuncio(prodIdRaw) {
     ['Vl. pago',   p.vlPago > 0 ? 'R$ ' + p.vlPago.toFixed(2).replace('.',',') : null],
     ['Lucro esp.', lucro !== 0 ? `R$ ${lucro.toFixed(2).replace('.',',')} (${pct > 0 ? '+':''}${pct}%)` : null],
   ].filter(r => r[1]).map(r =>
-    `<div class="anuncio-spec-row"><span class="anuncio-spec-label">${r[0]}</span><span class="anuncio-spec-val">${r[1]}</span></div>`
+    `<div class="anuncio-spec-row"><span class="anuncio-spec-label">${esc(r[0])}</span><span class="anuncio-spec-val">${esc(r[1])}</span></div>`
   ).join('');
 
   document.getElementById('anuncio-body').innerHTML = `
@@ -4747,15 +4775,15 @@ function abrirAnuncio(prodIdRaw) {
     <div class="anuncio-info-col">
       <div>
         <div class="anuncio-preco">R$ ${p.vlAnunciado.toFixed(2).replace('.',',')}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${p.status}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(p.status)}</div>
       </div>
-      <div class="anuncio-titulo">${p.nome}</div>
+      <div class="anuncio-titulo">${esc(p.nome)}</div>
       <div>
-        ${p.estado  ? `<span class="anuncio-tag">${p.estado}</span>`    : ''}
-        ${p.categoria ? `<span class="anuncio-tag">${p.categoria}</span>` : ''}
+        ${p.estado  ? `<span class="anuncio-tag">${esc(p.estado)}</span>`    : ''}
+        ${p.categoria ? `<span class="anuncio-tag">${esc(p.categoria)}</span>` : ''}
         ${fotosArr.length ? `<span class="anuncio-tag">📷 ${fotosArr.length} foto${fotosArr.length!==1?'s':''}</span>` : ''}
       </div>
-      ${p.descricao ? `<hr class="anuncio-divider"><p style="font-size:12px;color:var(--muted2);line-height:1.6">${p.descricao}</p>` : ''}
+      ${p.descricao ? `<hr class="anuncio-divider"><p style="font-size:12px;color:var(--muted2);line-height:1.6">${esc(p.descricao)}</p>` : ''}
       <hr class="anuncio-divider">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Especificações</div>
       <div>${especsHTML}</div>
@@ -4847,7 +4875,7 @@ function fmtData(iso){
   if(!iso) return '—';
   const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;
 }
-function gerarIdFin(){ return Date.now()+Math.random().toString(36).slice(2,6); }
+function gerarIdFin(){ return crypto.randomUUID(); }
 
 // ── Tabs Financeiro ──
 function finTab(id){
@@ -4984,15 +5012,15 @@ function renderEntradas(){
   tbody.innerHTML = lista.map(e=>{
     const permCell = e.permuta
       ? `<td style="font-size:11px;max-width:160px">
-           <span style="display:inline-flex;align-items:center;gap:4px;background:var(--amber-dim);color:var(--amber);padding:2px 7px;border-radius:999px;font-weight:600;font-size:10px;white-space:nowrap">🔧 ${e.permuta.desc}</span>
-           <div style="color:var(--muted);margin-top:2px">${brl(e.permuta.valor)} · ${e.permuta.estado}</div>
+           <span style="display:inline-flex;align-items:center;gap:4px;background:var(--amber-dim);color:var(--amber);padding:2px 7px;border-radius:999px;font-weight:600;font-size:10px;white-space:nowrap">🔧 ${esc(e.permuta.desc)}</span>
+           <div style="color:var(--muted);margin-top:2px">${brl(e.permuta.valor)} · ${esc(e.permuta.estado)}</div>
          </td>`
       : `<td style="color:var(--muted);font-size:12px">—</td>`;
     return `<tr>
       <td class="fluxo-date">${fmtData(e.data)}</td>
-      <td><span class="entrada-badge">${e.cat}</span></td>
-      <td>${e.desc}</td>
-      <td><span class="pgto-badge">${e.pgto}</span></td>
+      <td><span class="entrada-badge">${esc(e.cat)}</span></td>
+      <td>${esc(e.desc)}</td>
+      <td><span class="pgto-badge">${esc(e.pgto)}</span></td>
       <td style="font-size:12px;color:var(--muted2)">${e.parcelas>1?e.parcelas+'× ('+e.taxa+'%)':'À vista'}</td>
       <td class="val-pos">${brl(e.valor)}</td>
       <td class="val-pos">${brl(e.liquido)}</td>
@@ -5059,12 +5087,12 @@ function renderSaidas(){
   tbody.innerHTML = lista.map(s=>`
     <tr>
       <td class="fluxo-date">${fmtData(s.data)}</td>
-      <td><span class="saida-badge">${s.cat}</span></td>
-      <td>${s.desc}</td>
-      <td><span class="pgto-badge">${s.pgto}</span></td>
+      <td><span class="saida-badge">${esc(s.cat)}</span></td>
+      <td>${esc(s.desc)}</td>
+      <td><span class="pgto-badge">${esc(s.pgto)}</span></td>
       <td style="font-size:12px;color:var(--muted2)">${(s.parcelas||1)>1?(s.parcelas)+'× ('+(s.taxa||0)+'%)':'À vista'}</td>
       <td class="val-neg">${brl(s.valor)}</td>
-      <td style="font-size:12px;color:var(--muted2)">${s.obs||'—'}</td>
+      <td style="font-size:12px;color:var(--muted2)">${esc(s.obs)||'—'}</td>
       <td><button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="deletarSaida('${s.id}')">✕</button></td>
     </tr>`).join('');
 }
@@ -5132,8 +5160,8 @@ function renderFluxo(){
     <div class="fluxo-row">
       <span class="fluxo-date">${fmtData(t.data)}</span>
       <div>
-        <div style="font-size:13px">${t.desc}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${t.cat} · <span class="pgto-badge" style="padding:1px 6px">${t.pgto}</span>${t.permuta?` · <span style="color:var(--amber);font-weight:600">🔧 ${t.permuta.desc} (${brl(t.permuta.valor)})</span>`:''}</div>
+        <div style="font-size:13px">${esc(t.desc)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(t.cat)} · <span class="pgto-badge" style="padding:1px 6px">${esc(t.pgto)}</span>${t.permuta?` · <span style="color:var(--amber);font-weight:600">🔧 ${esc(t.permuta.desc)} (${brl(t.permuta.valor)})</span>`:''}</div>
       </div>
       <span class="${t.tipo==='entrada'?'entrada-badge':'saida-badge'}">${t.tipo==='entrada'?'Entrada':'Saída'}</span>
       <span class="${t.tipo==='entrada'?'val-pos':'val-neg'}">${t.tipo==='entrada'?'+':'-'}${brl(Math.abs(t.display))}</span>
@@ -5193,7 +5221,7 @@ function renderParcelamentos(){
   tbody.innerHTML = lista.map(p=>`
     <tr>
       <td class="fluxo-date">${fmtData(p.data)}</td>
-      <td>${p.desc}</td>
+      <td>${esc(p.desc)}</td>
       <td style="font-family:var(--mono);color:var(--teal)">${p.num}×</td>
       <td style="font-family:var(--mono)">${p.taxa.toFixed(2)}%</td>
       <td class="val-neu">${brl(p.valor)}</td>
@@ -5254,7 +5282,7 @@ function renderControle(){
   } else {
     resumoEnt.innerHTML = Object.entries(catEnt).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-        <span class="entrada-badge">${cat}</span>
+        <span class="entrada-badge">${esc(cat)}</span>
         <span class="val-pos">${brl(val)}</span>
       </div>`).join('');
   }
@@ -5268,7 +5296,7 @@ function renderControle(){
   } else {
     resumoSai.innerHTML = Object.entries(catSai).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-        <span class="saida-badge">${cat}</span>
+        <span class="saida-badge">${esc(cat)}</span>
         <span class="val-neg">${brl(val)}</span>
       </div>`).join('');
   }
@@ -5281,7 +5309,7 @@ function renderControle(){
     .filter(([,v])=>v>0)
     .map(([k,v])=>`
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px">
-        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">${k}</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">${esc(k)}</div>
         <div style="font-size:16px;font-weight:800;color:var(--${pgtoColors[k]||'text'});font-family:var(--mono)">${brl(v)}</div>
       </div>`).join('') || '<p style="font-size:12px;color:var(--muted)">Nenhum pagamento registrado.</p>';
 }
@@ -5349,7 +5377,7 @@ function salvarPC() {
 
   const editId = document.getElementById('pc-edit-id').value;
   const pc = {
-    id:         editId ? parseInt(editId) : Date.now(),
+    id:         editId ? editId : crypto.randomUUID(),
     nome,
     codigo,
     descricao:  document.getElementById('pc-descricao').value.trim(),
@@ -5366,18 +5394,18 @@ function salvarPC() {
     anunciado:  parseFloat(document.getElementById('pc-anunciado').value) || 0,
     minimo:     parseFloat(document.getElementById('pc-minimo').value)    || 0,
     fotos:      { ..._pcFotos },
-    criado:     editId ? (DB.pcs.find(p=>p.id===parseInt(editId))?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
+    criado:     editId ? (DB.pcs.find(p=>p.id===editId)?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
   };
 
   if (editId) {
     // Se uma foto não foi re-enviada, manter a anterior
-    const old = DB.pcs.find(p => p.id === parseInt(editId));
+    const old = DB.pcs.find(p => p.id === editId);
     if (old) {
       ['principal','interna','traseira','setup'].forEach(t => {
         if (!_pcFotos[t] && old.fotos && old.fotos[t]) pc.fotos[t] = old.fotos[t];
       });
     }
-    DB.pcs = DB.pcs.map(p => p.id === parseInt(editId) ? pc : p);
+    DB.pcs = DB.pcs.map(p => p.id === editId ? pc : p);
   } else {
     if (!DB.pcs) DB.pcs = [];
     DB.pcs.push(pc);
@@ -5476,18 +5504,18 @@ function renderPCs() {
       <td class="td-mono">${hl(p.codigo, termo)}</td>
       <td>
         <strong>${hl(p.nome, termo)}</strong>
-        ${p.gpu ? `<br><span style="font-size:11px;color:var(--teal)">${p.gpu}</span>` : ''}
+        ${p.gpu ? `<br><span style="font-size:11px;color:var(--teal)">${esc(p.gpu)}</span>` : ''}
       </td>
       <td style="font-size:12px">${hl(p.cpu || '—', termo)}</td>
       <td style="font-size:12px">${hl(p.ram || '—', termo)}</td>
-      <td style="font-size:12px">${[p.ssd, p.hd].filter(Boolean).join(' + ') || '—'}</td>
+      <td style="font-size:12px">${[p.ssd, p.hd].filter(Boolean).map(esc).join(' + ') || '—'}</td>
       <td class="val-neu">${brl(p.custo||0)}</td>
       <td class="val-pos">${brl(p.anunciado||0)}</td>
       <td style="font-family:var(--mono);font-weight:700;color:${lucro>=0?'var(--green)':'var(--red)'}">${brl(lucro)}</td>
       <td>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-sm btn-secondary" onclick="editarPC(${p.id})">✏ Editar</button>
-          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="deletarPC(${p.id})">✕</button>
+          <button class="btn btn-sm btn-secondary" onclick="editarPC('${p.id}')">✏ Editar</button>
+          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="deletarPC('${p.id}')">✕</button>
         </div>
       </td>
     </tr>`;
@@ -5554,7 +5582,7 @@ function salvarVenda() {
 
   const editId = document.getElementById('vd-edit-id').value;
   const venda = {
-    id:         editId ? parseInt(editId) : Date.now(),
+    id:         editId ? editId : crypto.randomUUID(),
     num,
     data:       document.getElementById('vd-data').value,
     canal:      document.getElementById('vd-canal').value,
@@ -5568,11 +5596,11 @@ function salvarVenda() {
     pgto:       document.getElementById('vd-pgto').value,
     parcelas:   parseInt(document.getElementById('vd-parcelas').value),
     status:     document.getElementById('vd-status').value,
-    criado:     editId ? (DB.vendas.find(v=>v.id===parseInt(editId))?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
+    criado:     editId ? (DB.vendas.find(v=>v.id===editId)?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
   };
 
   if (editId) {
-    DB.vendas = DB.vendas.map(v => v.id === parseInt(editId) ? venda : v);
+    DB.vendas = DB.vendas.map(v => v.id === editId ? venda : v);
   } else {
     confirmarNumVenda();
     DB.vendas.push(venda);
@@ -5682,19 +5710,19 @@ function renderVendas() {
       <td><strong>${hl(v.cliente, termo)}</strong></td>
       <td>
         <strong>${hl(v.produto, termo)}</strong>
-        ${v.categoria ? `<br><span style="font-size:11px;color:var(--muted)">${v.categoria}</span>` : ''}
+        ${v.categoria ? `<br><span style="font-size:11px;color:var(--muted)">${esc(v.categoria)}</span>` : ''}
       </td>
       <td class="val-pos">${brl(v.valor||0)}</td>
       <td class="val-neu">${brl(v.custo||0)}</td>
       <td style="font-family:var(--mono);font-weight:700;color:${lucroV>=0?'var(--green)':'var(--red)'}">${brl(lucroV)}</td>
       <td>
-        <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--card2);color:var(--muted2);border:1px solid var(--border2)">${v.pgto||'—'}${parcStr}</span>
-        <br><span style="display:inline-block;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;background:${stBg};color:${stCor}">${v.status}</span>
+        <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--card2);color:var(--muted2);border:1px solid var(--border2)">${esc(v.pgto)||'—'}${esc(parcStr)}</span>
+        <br><span style="display:inline-block;margin-top:3px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;background:${stBg};color:${stCor}">${esc(v.status)}</span>
       </td>
       <td>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-sm btn-secondary" onclick="editarVenda(${v.id})">✏ Editar</button>
-          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirVenda(${v.id})">✕</button>
+          <button class="btn btn-sm btn-secondary" onclick="editarVenda('${v.id}')">✏ Editar</button>
+          <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirVenda('${v.id}')">✕</button>
         </div>
       </td>
     </tr>`;
