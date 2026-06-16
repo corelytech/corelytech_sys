@@ -567,7 +567,7 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 <!-- ══════════════════════════════════════════
      TELA DE LOGIN / CADASTRO
      ══════════════════════════════════════════ -->
-<div id="auth-screen">
+<div id="auth-screen" style="display:none">
   <div class="auth-card">
     <div class="auth-logo">
       <div class="brand">CorelyTech</div>
@@ -770,6 +770,10 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
       Vendas
     </div>
     <div class="nav-section">Sistema</div>
+    <div class="nav-item" onclick="goTo('historico')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+      Histórico
+    </div>
     <div class="nav-item" onclick="goTo('config')">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Configurações
@@ -834,6 +838,61 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
           <div class="stat-val" id="dash-lucro-potencial" style="color:var(--green);font-size:20px">R$ 0,00</div>
           <div class="stat-sub" id="dash-lucro-pot-pct">Margem: 0%</div>
         </div>
+      </div>
+
+      <!-- ── SEÇÃO: FLUXO ORÇAMENTO → OS → FINANCEIRO ── -->
+      <div style="font-size:11px;font-weight:700;color:var(--purple2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        Fluxo — Orçamento → OS → Financeiro
+      </div>
+
+      <!-- Linha 1: Receitas do fluxo -->
+      <div class="grid-3" style="margin-bottom:12px">
+        <div class="stat-card purple">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">📋 Receita Prevista</div>
+          <div class="stat-val" id="dash-fluxo-prevista" style="color:var(--purple2);font-size:20px">R$ 0,00</div>
+          <div class="stat-sub">Orçamentos aprovados</div>
+        </div>
+        <div class="stat-card amber">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">⚙️ Receita em Execução</div>
+          <div class="stat-val" id="dash-fluxo-execucao" style="color:var(--amber);font-size:20px">R$ 0,00</div>
+          <div class="stat-sub">OS em aberto com valor</div>
+        </div>
+        <div class="stat-card green">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">✅ Receita Realizada</div>
+          <div class="stat-val" id="dash-fluxo-realizada" style="color:var(--green);font-size:20px">R$ 0,00</div>
+          <div class="stat-sub">Entradas originadas de OS</div>
+        </div>
+      </div>
+
+      <!-- Linha 2: Orçamentos por status + taxa de conversão -->
+      <div class="grid-4" style="margin-bottom:12px">
+        <div class="stat-card teal">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">📤 Enviados</div>
+          <div class="stat-val" id="dash-orc-enviados" style="color:var(--teal)">0</div>
+          <div class="stat-sub">Aguardando resposta</div>
+        </div>
+        <div class="stat-card green">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">✅ Aprovados</div>
+          <div class="stat-val" id="dash-orc-aprovados" style="color:var(--green)">0</div>
+          <div class="stat-sub">Prontos para converter</div>
+        </div>
+        <div class="stat-card red">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">❌ Recusados</div>
+          <div class="stat-val" id="dash-orc-recusados" style="color:var(--red)">0</div>
+          <div class="stat-sub">Perdas de negócio</div>
+        </div>
+        <div class="stat-card purple">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">🔄 Taxa de Conversão</div>
+          <div class="stat-val" id="dash-fluxo-taxa" style="color:var(--purple2);font-size:22px">0%</div>
+          <div class="stat-sub" id="dash-fluxo-taxa-sub">ORC convertidos em OS</div>
+        </div>
+      </div>
+
+      <!-- Funil visual -->
+      <div class="card" style="margin-bottom:20px;padding:16px 20px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em">📊 Funil de conversão</div>
+        <div id="dash-funil" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
 
       <!-- ── SEÇÃO: SERVIÇOS ── -->
@@ -1541,6 +1600,37 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
     </div>
 
     <!-- ═══════════════ CONFIGURAÇÕES ═══════════════ -->
+    <!-- ═══════════════ HISTÓRICO ═══════════════ -->
+    <div class="page" id="page-historico">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="search-bar">
+          <div class="search-wrap">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="search-input" id="busca-historico" placeholder="Buscar no histórico..." oninput="renderHistorico()">
+          </div>
+          <select class="filter-select" id="filtro-tipo-hist" onchange="renderHistorico()">
+            <option value="">Todos os tipos</option>
+            <option value="os_criada">OS criadas</option>
+            <option value="os_status">Mudanças de status (OS)</option>
+            <option value="orc_criado">Orçamentos criados</option>
+            <option value="orc_status">Status de orçamento</option>
+            <option value="orc_convertido">Conversões ORC→OS</option>
+            <option value="venda_criada">Vendas registradas</option>
+            <option value="entrada">Entradas financeiras</option>
+            <option value="saida">Saídas financeiras</option>
+          </select>
+          <button class="search-clear" onclick="limparBuscaHist()" title="Limpar filtros">✕</button>
+          <span class="search-count" id="count-historico"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data/Hora</th><th>Tipo</th><th>Referência</th><th>Detalhe</th></tr></thead>
+            <tbody id="historico-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-config">
       <div class="card" style="margin-bottom:20px;border-color:var(--purple);border-left:3px solid var(--purple)">
         <div class="card-header" style="margin-bottom:0">
@@ -2264,13 +2354,13 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 <div class="modal-overlay" id="modal-receita-os">
   <div class="modal">
     <div class="modal-header">
-      <h2>💰 Registrar Receita da OS</h2>
+      <h2 id="mrec-titulo">💰 Registrar Receita da OS</h2>
       <button class="close-btn" onclick="recusarReceitaOS()">✕</button>
     </div>
     <div class="modal-body">
       <!-- Identificação -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">OS entregue ao cliente</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px" id="mrec-subtitulo">OS concluída</div>
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
           <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--teal)" id="mrec-os-num"></span>
           <span style="font-size:13px;font-weight:600" id="mrec-os-cliente"></span>
@@ -2300,11 +2390,38 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
         </div>
       </div>
 
-      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--green)">
+      <!-- Parcelas (aparece só se pagamento for Cartão) -->
+      <div id="mrec-parcelas-row" class="form-row cols-2" style="display:none">
+        <div class="field">
+          <label>Nº de parcelas</label>
+          <select id="mrec-parcelas">
+            <option value="1">1× (à vista)</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+            <option value="4">4×</option>
+            <option value="6">6×</option>
+            <option value="10">10×</option>
+            <option value="12">12×</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Taxa do cartão (%)</label>
+          <input id="mrec-taxa" type="number" min="0" step="0.01" value="0" placeholder="0,00">
+        </div>
+      </div>
+
+      <!-- Observação -->
+      <div class="field" style="margin-top:8px">
+        <label>Observação (opcional)</label>
+        <input id="mrec-obs" type="text" placeholder="Ex: desconto aplicado, pagamento parcial…">
+      </div>
+
+      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--green);margin-top:14px">
         ✅ Ao confirmar, uma entrada será criada automaticamente no <strong>Módulo Financeiro</strong> vinculada a esta OS.
       </div>
 
       <input type="hidden" id="mrec-os-id">
+      <input type="hidden" id="mrec-os-status-novo">
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="recusarReceitaOS()">Não registrar agora</button>
@@ -2411,6 +2528,8 @@ async function authLogout() {
   try { await supaFetch('/auth/v1/logout', { method:'POST' }); } catch(_){}
   SUPA_TOKEN = null; SUPA_UID = null;
   localStorage.removeItem('ct_supa_session');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('auth-email').value = '';
   document.getElementById('auth-pass').value  = '';
@@ -2423,7 +2542,7 @@ async function onLogin(session) {
   document.getElementById('auth-screen').style.display = 'none';
   await loadFromSupabase();
   syncSetStatus('ok');
-  renderDashboard();
+  goTo('dashboard');
 }
 
 // ── UI helpers ──────────────────────────────────────────
@@ -2467,12 +2586,31 @@ const DB = {
   parcelamentos: [],
   pcs:           [],
   vendas:        [],
+  historico:     [],
 };
+
+// ── Registrar evento no histórico global ─────────────────
+/**
+ * addHistorico(tipo, dados)
+ * tipo: 'os_criada' | 'os_status' | 'orc_criado' | 'orc_status' | 'orc_convertido' |
+ *       'venda_criada' | 'entrada' | 'saida' | 'garantia' | 'produto' | 'cliente' | string livre
+ * dados: objeto com campos relevantes ao evento
+ */
+function addHistorico(tipo, dados = {}) {
+  if (!DB.historico) DB.historico = [];
+  DB.historico.push({
+    id:        crypto.randomUUID(),
+    tipo,
+    timestamp: new Date().toISOString(),
+    ...dados,
+  });
+  save('historico');
+}
 
 // ── Carregar dados do Supabase ───────────────────────────
 async function loadFromSupabase() {
   syncSetStatus('syncing', 'Carregando...');
-  const CHAVES = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','servicos'];
+  const CHAVES = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','servicos'];
   try {
     const rows = await supaFetch(`/rest/v1/ct_data?user_id=eq.${SUPA_UID}&select=chave,valor`, {
       headers: { 'Prefer': 'return=representation' }
@@ -2483,7 +2621,9 @@ async function loadFromSupabase() {
           DB.servicos = r.valor;
           localStorage.setItem('ct_servicos', JSON.stringify(DB.servicos));
         } else if (r.chave === 'estoque') {
-          DB.estoque = r.valor;
+          // Mescla: prefere Supabase se não estiver vazio, senão mantém localStorage
+          const local = JSON.parse(localStorage.getItem('ct_estoque') || '[]');
+          DB.estoque = (r.valor && r.valor.length > 0) ? r.valor : local;
           localStorage.setItem('ct_estoque', JSON.stringify(DB.estoque));
         } else if (DB.hasOwnProperty(r.chave)) {
           DB[r.chave] = r.valor;
@@ -2514,7 +2654,7 @@ async function loadFromSupabase() {
 }
 
 function _loadFromLocalStorage() {
-  ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas'].forEach(k => {
+  ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico'].forEach(k => {
     DB[k] = JSON.parse(localStorage.getItem('ct_' + k) || '[]');
   });
   DB.estoque  = JSON.parse(localStorage.getItem('ct_estoque')  || '[]');
@@ -2522,7 +2662,7 @@ function _loadFromLocalStorage() {
 }
 
 async function migrateLocalToSupabase() {
-  const localKeys = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas'];
+  const localKeys = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico'];
   let hasData = false;
   localKeys.forEach(k => {
     const v = JSON.parse(localStorage.getItem('ct_' + k) || '[]');
@@ -2597,8 +2737,38 @@ function save(key) {
   SAVE_QUEUE[key] = true;
   syncSetStatus('syncing');
   clearTimeout(SAVE_TIMER);
-  SAVE_TIMER = setTimeout(flushSaveQueue, 800);
+  SAVE_TIMER = setTimeout(flushSaveQueue, 400);
 }
+
+// Garante flush imediato ao sair/recarregar a página
+window.addEventListener('beforeunload', () => {
+  if (Object.keys(SAVE_QUEUE).length > 0 && SUPA_TOKEN) {
+    // sendBeacon envia de forma não-bloqueante mesmo durante unload
+    const keys = Object.keys(SAVE_QUEUE);
+    SAVE_QUEUE = {};
+    for (const k of keys) {
+      const body = JSON.stringify({
+        user_id:    SUPA_UID,
+        chave:      k,
+        valor:      DB[k] || [],
+        updated_at: new Date().toISOString(),
+      });
+      // Tenta PATCH via sendBeacon (fire-and-forget confiável no unload)
+      navigator.sendBeacon(
+        `${SUPA_URL}/rest/v1/ct_data?user_id=eq.${SUPA_UID}&chave=eq.${encodeURIComponent(k)}`,
+        new Blob([body], { type: 'application/json' })
+      );
+    }
+  }
+});
+
+// Flush também ao minimizar/trocar de aba (visibilitychange hidden)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && Object.keys(SAVE_QUEUE).length > 0) {
+    clearTimeout(SAVE_TIMER);
+    flushSaveQueue();
+  }
+});
 
 async function flushSaveQueue() {
   if (!SUPA_TOKEN) return;
@@ -3129,11 +3299,20 @@ function salvarOS() {
 
   DB.ordens.push(os);
   save('ordens');
+  addHistorico('os_criada', { ref: os.num, cliente: os.cliente, equip: os.equip, status: os.status });
   confirmarNumOS();
   closeModal('modal-os');
   renderOrdens();
   renderDashboard();
   toast('OS salva!');
+
+  // Se já foi criada com status final, oferece registrar receita
+  if (os.status === 'finalizado' || os.status === 'entregue') {
+    const jaRegistrada = (DB.entradas || []).find(e => e.osId === os.id);
+    if (!jaRegistrada) {
+      setTimeout(() => abrirModalReceitaOS(os, os.status), 400);
+    }
+  }
 }
 
 function renderOrdens() {
@@ -3184,35 +3363,56 @@ function mudarStatus(id, status) {
   const os = DB.ordens.find(o => o.id === id);
   if (!os) return;
 
+  const statusAnt = os.status;
   os.status = status;
   save('ordens');
+  addHistorico('os_status', { ref: os.num, cliente: os.cliente, de: statusAnt, para: status });
   renderOrdens();
   renderDashboard();
   toast('Status atualizado');
 
-  // Ao marcar como Entregue, verifica se cabe registrar receita
-  if (status === 'entregue') {
+  // Ao marcar como Finalizado ou Entregue, oferece registrar receita
+  if (status === 'finalizado' || status === 'entregue') {
     // Proteção contra duplicata
     const jaRegistrada = (DB.entradas || []).find(e => e.osId === os.id);
     if (jaRegistrada) {
-      toast('Receita desta OS já foi registrada anteriormente.', 'error');
+      toast('Receita desta OS já foi registrada anteriormente.', 'info');
       return;
     }
-    abrirModalReceitaOS(os);
+    abrirModalReceitaOS(os, status);
   }
 }
 
-// ── Modal de receita ao entregar OS ─────────────────────
-function abrirModalReceitaOS(os) {
+// ── Modal de receita ao finalizar/entregar OS ────────────
+function abrirModalReceitaOS(os, statusNovo) {
   const total = os.total || 0;
+  const isEntregue = statusNovo === 'entregue';
 
-  document.getElementById('mrec-os-num').textContent    = os.num;
+  // Título e subtítulo dinâmicos conforme o status
+  document.getElementById('mrec-titulo').textContent =
+    isEntregue ? '💰 Registrar Receita — OS Entregue' : '💰 Registrar Receita — OS Finalizada';
+  document.getElementById('mrec-subtitulo').textContent =
+    isEntregue ? 'OS entregue ao cliente' : 'OS marcada como finalizada';
+
+  document.getElementById('mrec-os-num').textContent     = os.num;
   document.getElementById('mrec-os-cliente').textContent = os.cliente || '—';
-  document.getElementById('mrec-valor').value           = total.toFixed(2);
-  document.getElementById('mrec-pgto').value            = 'PIX';
-  document.getElementById('mrec-os-id').value           = os.id;
+  document.getElementById('mrec-valor').value            = total > 0 ? total.toFixed(2) : '';
+  document.getElementById('mrec-pgto').value             = 'PIX';
+  document.getElementById('mrec-parcelas').value         = '1';
+  document.getElementById('mrec-taxa').value             = '0';
+  document.getElementById('mrec-obs').value              = '';
+  document.getElementById('mrec-os-id').value            = os.id;
+  document.getElementById('mrec-os-status-novo').value   = statusNovo || '';
+  document.getElementById('mrec-parcelas-row').style.display = 'none';
 
-  // Monta lista de serviços no modal
+  // Toggle parcelas ao mudar forma de pagamento
+  const pgtoEl = document.getElementById('mrec-pgto');
+  pgtoEl.onchange = function() {
+    document.getElementById('mrec-parcelas-row').style.display =
+      this.value === 'Cartão' ? 'grid' : 'none';
+  };
+
+  // Monta lista de serviços
   const itensEl = document.getElementById('mrec-itens');
   if (os.itens && os.itens.length) {
     itensEl.innerHTML = os.itens.map(i =>
@@ -3222,20 +3422,27 @@ function abrirModalReceitaOS(os) {
        </div>`
     ).join('') + (os.desconto > 0
       ? `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:var(--red)">
-           <span>Desconto</span><span>- R$ ${os.desconto.toFixed(2).replace('.',',')}</span>
+           <span>Desconto</span><span style="font-family:var(--mono)">- R$ ${os.desconto.toFixed(2).replace('.',',')}</span>
+         </div>` : '')
+      + (total > 0
+      ? `<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-size:13px;font-weight:700;color:var(--green)">
+           <span>Total</span><span style="font-family:var(--mono)">R$ ${total.toFixed(2).replace('.',',')}</span>
          </div>` : '');
   } else {
-    itensEl.innerHTML = `<div style="color:var(--muted);font-size:12px">OS manual — sem itens de orçamento</div>`;
+    itensEl.innerHTML = `<div style="color:var(--muted);font-size:12px">OS manual — sem itens de orçamento vinculado</div>`;
   }
 
   openModal('modal-receita-os');
 }
 
 function confirmarReceitaOS() {
-  const osId  = document.getElementById('mrec-os-id').value;
-  const valor = parseFloat(document.getElementById('mrec-valor').value) || 0;
-  const pgto  = document.getElementById('mrec-pgto').value;
-  const os    = DB.ordens.find(o => o.id === osId);
+  const osId    = document.getElementById('mrec-os-id').value;
+  const valor   = parseFloat(document.getElementById('mrec-valor').value) || 0;
+  const pgto    = document.getElementById('mrec-pgto').value;
+  const parcelas= parseInt(document.getElementById('mrec-parcelas').value) || 1;
+  const taxa    = pgto === 'Cartão' ? (parseFloat(document.getElementById('mrec-taxa').value) || 0) : 0;
+  const obs     = document.getElementById('mrec-obs').value.trim();
+  const os      = DB.ordens.find(o => o.id === osId);
   if (!os) { closeModal('modal-receita-os'); return; }
 
   if (valor <= 0) { toast('Informe um valor válido', 'error'); return; }
@@ -3248,17 +3455,20 @@ function confirmarReceitaOS() {
     return;
   }
 
-  const agora = new Date();
+  const liquido = valor * (1 - taxa / 100);
+  const agora   = new Date();
+  const descBase = `OS ${os.num} — ${os.cliente}`;
+
   const entrada = {
     id:      gerarIdFin(),
     cat:     'Serviços',
-    desc:    `OS ${os.num} — ${os.cliente}`,
+    desc:    obs ? `${descBase} (${obs})` : descBase,
     data:    agora.toISOString().split('T')[0],
     valor,
     pgto,
-    parcelas: 1,
-    taxa:    0,
-    liquido: valor,
+    parcelas,
+    taxa,
+    liquido: parseFloat(liquido.toFixed(2)),
     permuta: null,
     // rastreamento
     osId:    os.id,
@@ -3266,12 +3476,13 @@ function confirmarReceitaOS() {
     origem:  'os',
   };
 
-  // Atualiza pagamento na OS
-  os.pagamento = 'pago';
+  // Atualiza pagamento e forma de pagamento na OS
+  os.pagamento     = 'pago';
+  os.formaPagamento = pgto;
   if (!os.historico) os.historico = [];
   os.historico.push({
-    evento: `Receita registrada: R$ ${valor.toFixed(2).replace('.',',')} via ${pgto}`,
-    data: agora.toISOString(),
+    evento: `Receita registrada: R$ ${valor.toFixed(2).replace('.',',')} via ${pgto}${parcelas > 1 ? ` em ${parcelas}×` : ''}${obs ? ` — ${obs}` : ''}`,
+    data:   agora.toISOString(),
   });
 
   DB.entradas.push(entrada);
@@ -3281,21 +3492,31 @@ function confirmarReceitaOS() {
   closeModal('modal-receita-os');
   renderEntradas();
   renderControle();
+  renderOrdens();
   renderDashboard();
-  toast(`💰 Receita de R$ ${valor.toFixed(2).replace('.',',')} registrada!`);
+
+  const parcelasTxt = parcelas > 1 ? ` em ${parcelas}×` : '';
+  const liquidoTxt  = taxa > 0 ? ` (líquido: R$ ${liquido.toFixed(2).replace('.',',')})` : '';
+  toast(`💰 Receita de R$ ${valor.toFixed(2).replace('.',',')} via ${pgto}${parcelasTxt} registrada!${liquidoTxt}`);
 }
 
 function recusarReceitaOS() {
-  const osId = document.getElementById('mrec-os-id').value;
-  const os   = DB.ordens.find(o => o.id === osId);
+  const osId      = document.getElementById('mrec-os-id').value;
+  const statusNovo = document.getElementById('mrec-os-status-novo').value;
+  const os        = DB.ordens.find(o => o.id === osId);
   if (os) {
     os.pagamento = 'pendente';
     if (!os.historico) os.historico = [];
-    os.historico.push({ evento: 'Receita não registrada ao entregar', data: new Date().toISOString() });
+    const labelStatus = STATUS_LABEL[statusNovo] || statusNovo || 'concluída';
+    os.historico.push({
+      evento: `Receita não registrada ao marcar como "${labelStatus}" — lançamento manual pendente`,
+      data:   new Date().toISOString(),
+    });
     save('ordens');
+    renderOrdens();
   }
   closeModal('modal-receita-os');
-  toast('OK — receita não registrada. Você pode lançar manualmente no Financeiro.');
+  toast('⏳ Receita não registrada. Lembre de lançar manualmente no Financeiro.', 'info');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3396,6 +3617,7 @@ function salvarOrcamento() {
 
   DB.orcamentos.push(orc);
   save('orcamentos');
+  addHistorico('orc_criado', { ref: orc.num, cliente: orc.cliente, total: orc.total, status: orc.status });
   confirmarNumORC();
   closeModal('modal-orcamento');
   renderOrcamentos();
@@ -3431,6 +3653,7 @@ function mudarStatusOrc(id, novoStatus) {
   if (!orc.historico) orc.historico = [];
   orc.historico.push({ evento: `Status alterado: ${labelAnt} → ${labelNov}`, data: agora });
   save('orcamentos');
+  addHistorico('orc_status', { ref: orc.num, cliente: orc.cliente, de: labelAnt, para: labelNov });
   renderOrcamentos();
   renderDashboard();
   toast('Status atualizado!');
@@ -3500,6 +3723,7 @@ function converterOrcamentoEmOS(orcId) {
   renderOrcamentos();
   renderDashboard();
 
+  addHistorico('orc_convertido', { ref: orc.num, cliente: orc.cliente, osNum, total: orc.total });
   toast(`✅ OS ${osNum} criada a partir do Orçamento ${orc.num}!`);
 }
 
@@ -4123,6 +4347,83 @@ function renderDashboard() {
   if (elRec) elRec.textContent = brl(receitaMes);
 
   // ════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════
+  // SEÇÃO 0 — FLUXO ORÇAMENTO → OS → FINANCEIRO
+  // ════════════════════════════════════════════════════
+  const orcs      = DB.orcamentos || [];
+  const orcTotal  = orcs.length;
+
+  // Receita Prevista: soma dos orçamentos com status 'aprovado'
+  const orcAprovados  = orcs.filter(o => (o.status||'rascunho') === 'aprovado');
+  const orcEnviados   = orcs.filter(o => (o.status||'rascunho') === 'enviado');
+  const orcRecusados  = orcs.filter(o => (o.status||'rascunho') === 'recusado');
+  const orcConvertidos= orcs.filter(o => (o.status||'rascunho') === 'convertido');
+  const receitaPrev   = orcAprovados.reduce((s,o) => s + (Number(o.total||o.valor||0)), 0);
+
+  // Receita em Execução: OS abertas que têm valor (total > 0)
+  const STATUS_ABERTO_FL = ['recebido','analise','aguardando','execucao'];
+  const osComValor    = DB.ordens.filter(o => STATUS_ABERTO_FL.includes(o.status) && (o.total||o.valor||0) > 0);
+  const receitaExec   = osComValor.reduce((s,o) => s + Number(o.total||o.valor||0), 0);
+
+  // Receita Realizada: entradas financeiras com origem 'os'
+  const entradasOS    = (DB.entradas||[]).filter(e => e.origem === 'os');
+  const receitaReal   = entradasOS.reduce((s,e) => s + Number(e.liquido||e.valor||0), 0);
+
+  // Taxa de conversão: (convertidos ÷ total excluindo rascunhos) × 100
+  const orcAtivos     = orcs.filter(o => (o.status||'rascunho') !== 'rascunho');
+  const taxaConv      = orcAtivos.length > 0
+    ? Math.round((orcConvertidos.length / orcAtivos.length) * 100)
+    : 0;
+
+  // Atualizar cards
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setC = (id, v, cor) => { const el = document.getElementById(id); if (el) { el.textContent = v; if (cor) el.style.color = cor; } };
+
+  set('dash-orc-enviados',   orcEnviados.length);
+  set('dash-orc-aprovados',  orcAprovados.length);
+  set('dash-orc-recusados',  orcRecusados.length);
+
+  const elPrev = document.getElementById('dash-fluxo-prevista');
+  if (elPrev) elPrev.textContent = brl(receitaPrev);
+  const elExec = document.getElementById('dash-fluxo-execucao');
+  if (elExec) elExec.textContent = brl(receitaExec);
+  const elReal = document.getElementById('dash-fluxo-realizada');
+  if (elReal) elReal.textContent = brl(receitaReal);
+
+  const elTaxa = document.getElementById('dash-fluxo-taxa');
+  if (elTaxa) {
+    elTaxa.textContent = taxaConv + '%';
+    elTaxa.style.color = taxaConv >= 60 ? 'var(--green)' : taxaConv >= 30 ? 'var(--amber)' : 'var(--red)';
+  }
+  const elTaxaSub = document.getElementById('dash-fluxo-taxa-sub');
+  if (elTaxaSub) elTaxaSub.textContent = `${orcConvertidos.length} de ${orcAtivos.length} ativos`;
+
+  // Funil visual
+  const elFunil = document.getElementById('dash-funil');
+  if (elFunil) {
+    const etapas = [
+      { label: 'Total de orçamentos', qtd: orcTotal,              cor: 'var(--muted2)',   icon: '📝' },
+      { label: 'Enviados ao cliente', qtd: orcEnviados.length,    cor: 'var(--blue)',     icon: '📤' },
+      { label: 'Aprovados',           qtd: orcAprovados.length,   cor: 'var(--green)',    icon: '✅' },
+      { label: 'Convertidos em OS',   qtd: orcConvertidos.length, cor: 'var(--purple2)',  icon: '🔄' },
+      { label: 'OS concluídas',       qtd: (DB.ordens||[]).filter(o => ['finalizado','entregue'].includes(o.status) && o.orcId).length, cor: 'var(--teal)', icon: '✔️' },
+      { label: 'Receita registrada',  qtd: entradasOS.length,     cor: 'var(--amber)',    icon: '💰' },
+    ];
+    const max = Math.max(...etapas.map(e => e.qtd), 1);
+    elFunil.innerHTML = etapas.map(e => {
+      const pct = Math.round((e.qtd / max) * 100);
+      return `
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:130px;font-size:12px;color:var(--muted2);text-align:right;flex-shrink:0">${e.icon} ${e.label}</div>
+          <div style="flex:1;background:var(--border);border-radius:999px;height:18px;position:relative;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${e.cor};border-radius:999px;transition:width .4s;min-width:${e.qtd > 0 ? '2px' : '0'}"></div>
+          </div>
+          <div style="width:32px;font-size:12px;font-weight:700;font-family:var(--mono);color:${e.cor};text-align:right;flex-shrink:0">${e.qtd}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ════════════════════════════════════════════════════
   // SEÇÃO 1 — INDICADORES DE ESTOQUE
   // ════════════════════════════════════════════════════
   const estoque     = (DB.estoque||[]).filter(p => p.status !== 'Vendido');
@@ -4483,13 +4784,14 @@ function atualizarSelectServicos() {
 // ═══════════════════════════════════════════════════════
 function exportarBackup() {
   const backup = {
-    versao: '1.4',
+    versao: '1.5',
     exportado_em: new Date().toISOString(),
     clientes: DB.clientes, ordens: DB.ordens, orcamentos: DB.orcamentos,
     laudos: DB.laudos, garantias: DB.garantias, servicos: DB.servicos,
     estoque: DB.estoque, pcs: DB.pcs,
     entradas: DB.entradas, saidas: DB.saidas, parcelamentos: DB.parcelamentos,
     vendas: DB.vendas,
+    historico: DB.historico || [],
     contadores: {
       os:    parseInt(localStorage.getItem('ct_seq_os')    || '0'),
       orc:   parseInt(localStorage.getItem('ct_seq_orc')   || '0'),
@@ -4530,7 +4832,8 @@ function importarBackup(input) {
       DB.saidas      = backup.saidas      || [];
       DB.parcelamentos = backup.parcelamentos || [];
       DB.vendas      = backup.vendas      || [];
-      ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas'].forEach(k => save(k));
+      DB.historico   = backup.historico   || [];
+      ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico'].forEach(k => save(k));
       save('servicos');
       save('estoque');
       if (backup.contadores) {
@@ -4586,6 +4889,93 @@ function proximoNumOS()  { return 'OS-'  + String(parseInt(localStorage.getItem(
 function proximoNumORC() { return 'ORC-' + String(parseInt(localStorage.getItem('ct_seq_orc') || '0') + 1).padStart(3,'0'); }
 function confirmarNumOS()  { localStorage.setItem('ct_seq_os',  parseInt(localStorage.getItem('ct_seq_os')  || '0') + 1); }
 function confirmarNumORC() { localStorage.setItem('ct_seq_orc', parseInt(localStorage.getItem('ct_seq_orc') || '0') + 1); }
+
+// ═══════════════════════════════════════════════════════
+// HISTÓRICO DE ATIVIDADES
+// ═══════════════════════════════════════════════════════
+const HIST_TIPO_LABEL = {
+  os_criada:      { icon: '📋', label: 'OS Criada',           cor: 'var(--teal)' },
+  os_status:      { icon: '🔄', label: 'Status OS',           cor: 'var(--blue)' },
+  orc_criado:     { icon: '💰', label: 'Orçamento Criado',    cor: 'var(--purple2)' },
+  orc_status:     { icon: '📝', label: 'Status Orçamento',    cor: 'var(--amber)' },
+  orc_convertido: { icon: '⚙️', label: 'ORC → OS',           cor: 'var(--green)' },
+  venda_criada:   { icon: '🛒', label: 'Venda',               cor: 'var(--green)' },
+  entrada:        { icon: '⬆️', label: 'Entrada Financeira',  cor: 'var(--green)' },
+  saida:          { icon: '⬇️', label: 'Saída Financeira',    cor: 'var(--red)' },
+};
+
+function renderHistorico() {
+  const tb     = document.getElementById('historico-tbody');
+  const termo  = (document.getElementById('busca-historico')?.value || '').trim().toLowerCase();
+  const filtro = (document.getElementById('filtro-tipo-hist')?.value || '');
+
+  if (!DB.historico) DB.historico = [];
+
+  let lista = DB.historico.slice().reverse();
+
+  if (filtro) lista = lista.filter(h => h.tipo === filtro);
+  if (termo)  lista = lista.filter(h => {
+    const haystack = [h.tipo, h.ref, h.cliente, h.desc, h.produto, h.para, h.de, h.equip, h.cat]
+      .filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(termo);
+  });
+
+  setCount('count-historico', lista.length, DB.historico.length);
+
+  if (!lista.length) {
+    tb.innerHTML = DB.historico.length
+      ? `<tr><td colspan="4"><div class="empty-state"><p>Nenhum evento encontrado para os filtros.</p></div></td></tr>`
+      : `<tr><td colspan="4"><div class="empty-state">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:40px;height:40px;margin:0 auto 12px;display:block;opacity:.4"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          <p>Nenhum evento registrado ainda.<br>Ações realizadas no sistema aparecerão aqui automaticamente.</p>
+        </div></td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = lista.map(h => {
+    const meta  = HIST_TIPO_LABEL[h.tipo] || { icon: '📌', label: h.tipo, cor: 'var(--muted2)' };
+    const dtFmt = h.timestamp ? new Date(h.timestamp).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+
+    let refHTML = '';
+    if (h.ref)     refHTML += `<span class="td-mono" style="color:var(--teal)">${esc(h.ref)}</span>`;
+    if (h.cliente) refHTML += `<span style="margin-left:8px;font-size:12px;color:var(--text)">${esc(h.cliente)}</span>`;
+
+    let detalhe = '';
+    if (h.tipo === 'os_criada')      detalhe = `${esc(h.equip||'')}${h.status ? ' · <span style="color:var(--muted)">'+esc(h.status)+'</span>' : ''}`;
+    if (h.tipo === 'os_status')      detalhe = `<span style="color:var(--muted)">${esc(h.de||'')}</span> → <strong style="color:var(--teal)">${esc(h.para||'')}</strong>`;
+    if (h.tipo === 'orc_criado')     detalhe = `Total: <span style="font-family:var(--mono);color:var(--green)">${h.total != null ? brl(h.total) : '—'}</span>`;
+    if (h.tipo === 'orc_status')     detalhe = `<span style="color:var(--muted)">${esc(h.de||'')}</span> → <strong style="color:var(--purple2)">${esc(h.para||'')}</strong>`;
+    if (h.tipo === 'orc_convertido') detalhe = `Gerou OS <span class="td-mono" style="color:var(--teal)">${esc(h.osNum||'')}</span>${h.total != null ? ' · '+brl(h.total) : ''}`;
+    if (h.tipo === 'venda_criada')   detalhe = `${esc(h.produto||'')}${h.valor != null ? ' · <span style="font-family:var(--mono);color:var(--green)">'+brl(h.valor)+'</span>' : ''}${h.pgto ? ' via '+esc(h.pgto) : ''}`;
+    if (h.tipo === 'entrada')        detalhe = `${esc(h.cat||'')} · ${esc(h.desc||'')}${h.valor != null ? ' · <span style="font-family:var(--mono);color:var(--green)">'+brl(h.valor)+'</span>' : ''}`;
+    if (h.tipo === 'saida')          detalhe = `${esc(h.cat||'')} · ${esc(h.desc||'')}${h.valor != null ? ' · <span style="font-family:var(--mono);color:var(--red)">'+brl(h.valor)+'</span>' : ''}`;
+
+    return `<tr>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap;font-family:var(--mono)">${dtFmt}</td>
+      <td>
+        <span style="display:inline-flex;align-items:center;gap:5px;background:${meta.cor}20;color:${meta.cor};padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap">
+          ${meta.icon} ${meta.label}
+        </span>
+      </td>
+      <td>${refHTML || '—'}</td>
+      <td style="font-size:12px;color:var(--muted2)">${detalhe || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function limparHistorico() {
+  if (!confirm(`Limpar todo o histórico de atividades?\n\n(${(DB.historico||[]).length} eventos serão apagados permanentemente)`)) return;
+  DB.historico = [];
+  save('historico');
+  renderHistorico();
+  toast('Histórico limpo');
+}
+
+function limparBuscaHist() {
+  document.getElementById('busca-historico').value = '';
+  document.getElementById('filtro-tipo-hist').value = '';
+  renderHistorico();
+}
 
 // ═══════════════════════════════════════════════════════
 // NAV & UTILITÁRIOS
@@ -4836,7 +5226,7 @@ function renderEstoque() {
   }).join('');
 }
 
-const PAGE_TITLES = { dashboard:'Dashboard', clientes:'Clientes', ordens:'Ordens de Serviço', orcamentos:'Orçamentos', laudos:'Laudos Técnicos', garantias:'Garantias', financeiro:'Financeiro', estoque:'Estoque', pcs:'PCs Montados', vendas:'Vendas', config:'Configurações' };
+const PAGE_TITLES = { dashboard:'Dashboard', clientes:'Clientes', ordens:'Ordens de Serviço', orcamentos:'Orçamentos', laudos:'Laudos Técnicos', garantias:'Garantias', financeiro:'Financeiro', estoque:'Estoque', pcs:'PCs Montados', vendas:'Vendas', historico:'Histórico de Atividades', config:'Configurações' };
 const PAGE_ACTIONS = {
   clientes:   '<button class="btn btn-primary" onclick="abrirNovoCliente()">+ Novo Cliente</button>',
   ordens:     '<button class="btn btn-primary" onclick="abrirNovaOS()">+ Nova OS</button>',
@@ -4847,6 +5237,7 @@ const PAGE_ACTIONS = {
   estoque:    '<button class="btn btn-primary" onclick="abrirNovoProduto()">+ Novo Produto</button>',
   pcs:        '<button class="btn btn-primary" onclick="abrirNovoPc()">+ Novo PC</button>',
   vendas:     '<button class="btn btn-primary" onclick="abrirNovaVenda()">+ Nova Venda</button>',
+  historico:  '<button class="btn btn-secondary" onclick="limparHistorico()" style="color:var(--red);border-color:var(--red-dim)">🗑 Limpar histórico</button>',
   config:     '<button class="btn btn-primary" onclick="exportarBackup()">⬇️ Exportar Backup</button>',
 };
 
@@ -4868,6 +5259,7 @@ function goTo(page) {
   if (page === 'pcs')        renderPCs();
   if (page === 'vendas')     renderVendas();
   if (page === 'config')     { renderConfigServicos(); atualizarInfoBackup(); }
+  if (page === 'historico')  renderHistorico();
 }
 
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
@@ -4915,6 +5307,9 @@ function limparBuscaGarantia(){ document.getElementById('busca-garantias').value
 // INIT — Boot com Supabase
 // ═══════════════════════════════════════════════════════
 (async function boot() {
+  // Mostra login enquanto valida (evita flash de conteúdo sem auth)
+  document.getElementById('auth-screen').style.display = 'flex';
+
   // Tentar sessão salva
   const saved = localStorage.getItem('ct_supa_session');
   if (saved) {
@@ -4930,7 +5325,7 @@ function limparBuscaGarantia(){ document.getElementById('busca-garantias').value
         document.getElementById('auth-screen').style.display = 'none';
         await loadFromSupabase();
         atualizarSelectServicos();
-        renderDashboard();
+        goTo('dashboard');
         return;
       }
     } catch(_) {
@@ -5394,6 +5789,7 @@ function salvarEntrada(){
 
   DB.entradas.push({ id:gerarIdFin(), cat, desc, data, valor, pgto, parcelas:parc, taxa, liquido:liq, permuta });
   save('entradas');
+  addHistorico('entrada', { cat, desc, data, valor: liq, pgto });
   limparFormEntrada();
   renderEntradas();
   renderControle();
@@ -5470,6 +5866,7 @@ function salvarSaida(){
   if(valor<=0){ toast('Valor deve ser maior que zero','error'); return; }
   DB.saidas.push({ id:gerarIdFin(), cat, desc, data, valor, pgto, obs, parcelas:parc, taxa });
   save('saidas');
+  addHistorico('saida', { cat, desc, data, valor, pgto });
   limparFormSaida();
   renderSaidas();
   renderControle();
@@ -6010,6 +6407,7 @@ function salvarVenda() {
   } else {
     confirmarNumVenda();
     DB.vendas.push(venda);
+    addHistorico('venda_criada', { ref: venda.num, cliente: venda.cliente, produto: venda.produto, valor: venda.valor, pgto: venda.pgto });
   }
 
   save('vendas');
