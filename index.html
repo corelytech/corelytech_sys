@@ -81,6 +81,13 @@ nav{flex:1;overflow-y:auto;padding:10px 0}
 .badge.entregue{background:var(--border);color:var(--muted2)}.badge.entregue .badge-dot{background:var(--muted2)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
+/* ── BADGES STATUS ORÇAMENTO ── */
+.badge.orc-rascunho{background:var(--border);color:var(--muted2)}.badge.orc-rascunho .badge-dot{background:var(--muted2)}
+.badge.orc-enviado{background:#1E2A3A;color:var(--blue)}.badge.orc-enviado .badge-dot{background:var(--blue)}
+.badge.orc-aprovado{background:var(--green-dim);color:var(--green)}.badge.orc-aprovado .badge-dot{background:var(--green)}
+.badge.orc-recusado{background:var(--red-dim);color:var(--red)}.badge.orc-recusado .badge-dot{background:var(--red)}
+.badge.orc-convertido{background:var(--purple-dim);color:var(--purple2)}.badge.orc-convertido .badge-dot{background:var(--purple2)}
+
 /* ── TABLE ── */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
@@ -1008,12 +1015,20 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
             <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input class="search-input" id="busca-orcamentos" placeholder="Buscar por nº ou nome do cliente..." oninput="renderOrcamentos()">
           </div>
-          <button class="search-clear" onclick="limparBusca('busca-orcamentos')" title="Limpar busca">✕</button>
+          <select class="filter-select" id="filtro-status-orc" onchange="renderOrcamentos()">
+            <option value="">Todos os status</option>
+            <option value="rascunho">📝 Rascunho</option>
+            <option value="enviado">📤 Enviado</option>
+            <option value="aprovado">✅ Aprovado</option>
+            <option value="recusado">❌ Recusado</option>
+            <option value="convertido">🔄 Convertido em OS</option>
+          </select>
+          <button class="search-clear" onclick="limparBuscaOrc()" title="Limpar filtros">✕</button>
           <span class="search-count" id="count-orcamentos"></span>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Nº</th><th>Cliente</th><th>Data</th><th>Serviços</th><th>Total</th><th></th></tr></thead>
+            <thead><tr><th>Nº</th><th>Cliente</th><th>Data</th><th>Status</th><th>Serviços</th><th>Total</th><th></th></tr></thead>
             <tbody id="orcamentos-tbody"></tbody>
           </table>
         </div>
@@ -1634,6 +1649,7 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
       <div class="form-row">
         <div class="field"><label>Observações</label><textarea id="c-obs" placeholder="Anotações sobre o cliente..."></textarea></div>
       </div>
+      <input type="hidden" id="c-edit-id">
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -1729,7 +1745,10 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 <!-- Modal Orçamento -->
 <div class="modal-overlay" id="modal-orcamento">
   <div class="modal modal-lg">
-    <div class="modal-header"><h2>Novo Orçamento</h2><button class="close-btn" onclick="closeModal('modal-orcamento')">✕</button></div>
+    <div class="modal-header">
+      <h2 id="modal-orc-titulo">Novo Orçamento</h2>
+      <button class="close-btn" onclick="closeModal('modal-orcamento')">✕</button>
+    </div>
     <div class="modal-body">
       <div class="form-row cols-3">
         <div class="field"><label>Nº do Orçamento *</label><input id="orc-num" placeholder="Ex: ORC-001"></div>
@@ -1751,6 +1770,34 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
         </div>
         <div class="field"><label>Data</label><input id="orc-data" type="date"></div>
       </div>
+
+      <!-- Status do orçamento -->
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Status do orçamento</label>
+          <select id="orc-status">
+            <option value="rascunho">📝 Rascunho</option>
+            <option value="enviado">📤 Enviado</option>
+            <option value="aprovado">✅ Aprovado</option>
+            <option value="recusado">❌ Recusado</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Validade do orçamento</label>
+          <input id="orc-validade" type="date" placeholder="Data limite de validade">
+        </div>
+      </div>
+
+      <!-- Equipamento e defeito (opcionais — usados na conversão para OS) -->
+      <div class="section-title" style="margin-top:4px">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Equipamento / Serviço <span style="font-size:11px;color:var(--muted);font-weight:400">(opcional — usado ao converter em OS)</span>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Equipamento</label><input id="orc-equip" placeholder="Ex: PC Desktop, Notebook, GPU"></div>
+        <div class="field"><label>Problema / Serviço solicitado</label><input id="orc-defeito" placeholder="Ex: Limpeza + troca de pasta térmica"></div>
+      </div>
+
       <div class="section-title">Serviços</div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div class="field" style="flex:1"><select id="orc-servico-sel"></select></div>
@@ -2209,6 +2256,59 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-venda')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarVenda()">Salvar Venda</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Receita OS -->
+<div class="modal-overlay" id="modal-receita-os">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>💰 Registrar Receita da OS</h2>
+      <button class="close-btn" onclick="recusarReceitaOS()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Identificação -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">OS entregue ao cliente</div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--teal)" id="mrec-os-num"></span>
+          <span style="font-size:13px;font-weight:600" id="mrec-os-cliente"></span>
+        </div>
+      </div>
+
+      <!-- Itens do orçamento vinculado -->
+      <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Serviços</div>
+      <div id="mrec-itens" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px"></div>
+
+      <!-- Valor e forma de pagamento -->
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Valor recebido (R$) *</label>
+          <input id="mrec-valor" type="number" min="0" step="0.01" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label>Forma de pagamento *</label>
+          <select id="mrec-pgto">
+            <option value="PIX">PIX</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Transferência">Transferência</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Misto">Misto</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--green)">
+        ✅ Ao confirmar, uma entrada será criada automaticamente no <strong>Módulo Financeiro</strong> vinculada a esta OS.
+      </div>
+
+      <input type="hidden" id="mrec-os-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="recusarReceitaOS()">Não registrar agora</button>
+      <button class="btn btn-primary" style="background:var(--green)" onclick="confirmarReceitaOS()">💰 Confirmar receita</button>
     </div>
   </div>
 </div>
@@ -2848,9 +2948,35 @@ document.addEventListener('click', e => {
 // CLIENTES
 // ═══════════════════════════════════════════════════════
 function salvarCliente() {
-  const nome = document.getElementById('c-nome').value.trim();
+  const nome   = document.getElementById('c-nome').value.trim();
+  const editId = document.getElementById('c-edit-id').value;
   if (!nome) { toast('Nome obrigatório', 'error'); return; }
 
+  if (editId) {
+    // ── EDIÇÃO ──
+    const idx = DB.clientes.findIndex(x => x.id === editId);
+    if (idx >= 0) {
+      DB.clientes[idx] = {
+        ...DB.clientes[idx],
+        nome,
+        tel:    document.getElementById('c-tel').value.trim(),
+        wpp:    document.getElementById('c-wpp').value.trim(),
+        email:  document.getElementById('c-email').value.trim(),
+        cidade: document.getElementById('c-cidade').value.trim(),
+        obs:    document.getElementById('c-obs').value.trim(),
+      };
+    }
+    save('clientes');
+    closeModal('modal-cliente');
+    ['c-nome','c-tel','c-wpp','c-email','c-cidade','c-obs'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('c-edit-id').value = '';
+    document.getElementById('modal-cliente-title').textContent = 'Novo Cliente';
+    renderClientes();
+    toast('Cliente atualizado!');
+    return;
+  }
+
+  // ── CRIAÇÃO ──
   const c = {
     id: crypto.randomUUID(),
     nome,
@@ -2876,6 +3002,27 @@ function salvarCliente() {
     AC_STATE[ctx].clienteId = c.id;
     acExibirVinculado(ctx, c);
   }
+}
+
+function abrirNovoCliente() {
+  document.getElementById('modal-cliente-title').textContent = 'Novo Cliente';
+  document.getElementById('c-edit-id').value = '';
+  ['c-nome','c-tel','c-wpp','c-email','c-cidade','c-obs'].forEach(id => document.getElementById(id).value = '');
+  openModal('modal-cliente');
+}
+
+function editarCliente(id) {
+  const c = DB.clientes.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modal-cliente-title').textContent = 'Editar Cliente';
+  document.getElementById('c-edit-id').value  = id;
+  document.getElementById('c-nome').value     = c.nome   || '';
+  document.getElementById('c-tel').value      = c.tel    || '';
+  document.getElementById('c-wpp').value      = c.wpp    || '';
+  document.getElementById('c-email').value    = c.email  || '';
+  document.getElementById('c-cidade').value   = c.cidade || '';
+  document.getElementById('c-obs').value      = c.obs    || '';
+  openModal('modal-cliente');
 }
 
 function renderClientes() {
@@ -2907,7 +3054,7 @@ function renderClientes() {
       <td>${hl(c.tel || c.wpp, termo) || '—'}</td>
       <td>${esc(c.cidade) || '—'}</td>
       <td><span style="color:var(--teal);font-family:var(--mono)">${ats}</span></td>
-      <td><button class="btn btn-sm btn-secondary" onclick="excluirCliente('${c.id}')">Excluir</button></td>
+      <td><button class="btn btn-sm btn-secondary" onclick="editarCliente('${c.id}')">✏️ Editar</button> <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none" onclick="excluirCliente('${c.id}')">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -3012,11 +3159,15 @@ function renderOrdens() {
 
   tb.innerHTML = lista.map(o => `
     <tr>
-      <td class="td-mono">${hl(o.num, termo)}</td>
+      <td class="td-mono">${hl(o.num, termo)}${o.orcNum ? `<br><span style="font-size:10px;color:var(--purple2);font-family:var(--mono);background:var(--purple-dim);padding:1px 5px;border-radius:3px">via ${esc(o.orcNum)}</span>` : ''}</td>
       <td><strong>${hl(o.cliente, termo)}</strong></td>
       <td>${esc(o.equip)}${o.marca ? ' — ' + esc(o.marca) : ''}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.defeito)}</td>
-      <td><span class="badge ${esc(o.status)}"><span class="badge-dot"></span>${STATUS_LABEL[o.status] || esc(o.status)}</span></td>
+      <td>
+        <span class="badge ${esc(o.status)}"><span class="badge-dot"></span>${STATUS_LABEL[o.status] || esc(o.status)}</span>
+        ${o.pagamento === 'pago' ? `<br><span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-dim);padding:1px 6px;border-radius:3px;margin-top:2px;display:inline-block">💰 pago</span>` : ''}
+        ${o.pagamento === 'pendente' && o.total > 0 ? `<br><span style="font-size:10px;font-weight:700;color:var(--amber);background:var(--amber-dim);padding:1px 6px;border-radius:3px;margin-top:2px;display:inline-block">⏳ pendente</span>` : ''}
+      </td>
       <td style="color:var(--muted);font-size:12px">${esc(o.data)}</td>
       <td>
         <select onchange="mudarStatus('${o.id}',this.value)"
@@ -3031,7 +3182,120 @@ function renderOrdens() {
 
 function mudarStatus(id, status) {
   const os = DB.ordens.find(o => o.id === id);
-  if (os) { os.status = status; save('ordens'); renderOrdens(); renderDashboard(); toast('Status atualizado'); }
+  if (!os) return;
+
+  os.status = status;
+  save('ordens');
+  renderOrdens();
+  renderDashboard();
+  toast('Status atualizado');
+
+  // Ao marcar como Entregue, verifica se cabe registrar receita
+  if (status === 'entregue') {
+    // Proteção contra duplicata
+    const jaRegistrada = (DB.entradas || []).find(e => e.osId === os.id);
+    if (jaRegistrada) {
+      toast('Receita desta OS já foi registrada anteriormente.', 'error');
+      return;
+    }
+    abrirModalReceitaOS(os);
+  }
+}
+
+// ── Modal de receita ao entregar OS ─────────────────────
+function abrirModalReceitaOS(os) {
+  const total = os.total || 0;
+
+  document.getElementById('mrec-os-num').textContent    = os.num;
+  document.getElementById('mrec-os-cliente').textContent = os.cliente || '—';
+  document.getElementById('mrec-valor').value           = total.toFixed(2);
+  document.getElementById('mrec-pgto').value            = 'PIX';
+  document.getElementById('mrec-os-id').value           = os.id;
+
+  // Monta lista de serviços no modal
+  const itensEl = document.getElementById('mrec-itens');
+  if (os.itens && os.itens.length) {
+    itensEl.innerHTML = os.itens.map(i =>
+      `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+         <span>${esc(i.nome)}</span>
+         <span style="font-family:var(--mono);color:var(--teal)">R$ ${(i.preco||0).toFixed(2).replace('.',',')}</span>
+       </div>`
+    ).join('') + (os.desconto > 0
+      ? `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:var(--red)">
+           <span>Desconto</span><span>- R$ ${os.desconto.toFixed(2).replace('.',',')}</span>
+         </div>` : '');
+  } else {
+    itensEl.innerHTML = `<div style="color:var(--muted);font-size:12px">OS manual — sem itens de orçamento</div>`;
+  }
+
+  openModal('modal-receita-os');
+}
+
+function confirmarReceitaOS() {
+  const osId  = document.getElementById('mrec-os-id').value;
+  const valor = parseFloat(document.getElementById('mrec-valor').value) || 0;
+  const pgto  = document.getElementById('mrec-pgto').value;
+  const os    = DB.ordens.find(o => o.id === osId);
+  if (!os) { closeModal('modal-receita-os'); return; }
+
+  if (valor <= 0) { toast('Informe um valor válido', 'error'); return; }
+
+  // Proteção dupla contra duplicata
+  const jaRegistrada = (DB.entradas || []).find(e => e.osId === osId);
+  if (jaRegistrada) {
+    toast('Receita desta OS já foi registrada!', 'error');
+    closeModal('modal-receita-os');
+    return;
+  }
+
+  const agora = new Date();
+  const entrada = {
+    id:      gerarIdFin(),
+    cat:     'Serviços',
+    desc:    `OS ${os.num} — ${os.cliente}`,
+    data:    agora.toISOString().split('T')[0],
+    valor,
+    pgto,
+    parcelas: 1,
+    taxa:    0,
+    liquido: valor,
+    permuta: null,
+    // rastreamento
+    osId:    os.id,
+    osNum:   os.num,
+    origem:  'os',
+  };
+
+  // Atualiza pagamento na OS
+  os.pagamento = 'pago';
+  if (!os.historico) os.historico = [];
+  os.historico.push({
+    evento: `Receita registrada: R$ ${valor.toFixed(2).replace('.',',')} via ${pgto}`,
+    data: agora.toISOString(),
+  });
+
+  DB.entradas.push(entrada);
+  save('entradas');
+  save('ordens');
+
+  closeModal('modal-receita-os');
+  renderEntradas();
+  renderControle();
+  renderDashboard();
+  toast(`💰 Receita de R$ ${valor.toFixed(2).replace('.',',')} registrada!`);
+}
+
+function recusarReceitaOS() {
+  const osId = document.getElementById('mrec-os-id').value;
+  const os   = DB.ordens.find(o => o.id === osId);
+  if (os) {
+    os.pagamento = 'pendente';
+    if (!os.historico) os.historico = [];
+    os.historico.push({ evento: 'Receita não registrada ao entregar', data: new Date().toISOString() });
+    save('ordens');
+  }
+  closeModal('modal-receita-os');
+  toast('OK — receita não registrada. Você pode lançar manualmente no Financeiro.');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3042,10 +3306,16 @@ let orcItens = [];
 function abrirOrcamento() {
   orcItens = [];
   acResetar('orc');
-  document.getElementById('orc-num').value  = proximoNumORC();
-  document.getElementById('orc-data').value = new Date().toISOString().split('T')[0];
-  document.getElementById('orc-desc').value = '';
-  document.getElementById('orc-obs').value  = '';
+  document.getElementById('modal-orc-titulo').textContent = 'Novo Orçamento';
+  document.getElementById('orc-num').value      = proximoNumORC();
+  document.getElementById('orc-data').value     = new Date().toISOString().split('T')[0];
+  document.getElementById('orc-status').value   = 'rascunho';
+  document.getElementById('orc-validade').value = '';
+  document.getElementById('orc-equip').value    = '';
+  document.getElementById('orc-defeito').value  = '';
+  document.getElementById('orc-desc').value     = '';
+  document.getElementById('orc-obs').value      = '';
+  document.getElementById('orc-num').removeAttribute('readonly');
   atualizarSelectServicos();
   renderOrcItens();
   openModal('modal-orcamento');
@@ -3105,17 +3375,23 @@ function salvarOrcamento() {
 
   const sub  = orcItens.reduce((s, i) => s + i.preco, 0);
   const desc = parseFloat(document.getElementById('orc-desc').value) || 0;
+  const agora = new Date().toISOString();
 
   const orc = {
-    id: crypto.randomUUID(),
+    id:        crypto.randomUUID(),
     num,
     cliente:   clienteNome,
     clienteId: clienteId || null,
     data:      document.getElementById('orc-data').value,
+    status:    document.getElementById('orc-status').value || 'rascunho',
+    validade:  document.getElementById('orc-validade').value || '',
+    equip:     document.getElementById('orc-equip').value.trim(),
+    defeito:   document.getElementById('orc-defeito').value.trim(),
     itens:     [...orcItens],
     desconto:  desc,
     total:     sub - desc,
     obs:       document.getElementById('orc-obs').value,
+    historico: [{ evento: 'Orçamento criado', data: agora }],
   };
 
   DB.orcamentos.push(orc);
@@ -3123,40 +3399,170 @@ function salvarOrcamento() {
   confirmarNumORC();
   closeModal('modal-orcamento');
   renderOrcamentos();
+  renderDashboard();
   toast('Orçamento salvo!');
 }
 
-function renderOrcamentos() {
-  const tb    = document.getElementById('orcamentos-tbody');
-  const termo = (document.getElementById('busca-orcamentos')?.value || '').trim().toLowerCase();
-  let lista   = DB.orcamentos.slice().reverse();
+const ORC_STATUS_LABEL = {
+  rascunho:   '📝 Rascunho',
+  enviado:    '📤 Enviado',
+  aprovado:   '✅ Aprovado',
+  recusado:   '❌ Recusado',
+  convertido: '🔄 Convertido em OS',
+};
 
-  if (termo) lista = lista.filter(o =>
+function limparBuscaOrc() {
+  document.getElementById('busca-orcamentos').value = '';
+  const sf = document.getElementById('filtro-status-orc');
+  if (sf) sf.value = '';
+  renderOrcamentos();
+}
+
+function mudarStatusOrc(id, novoStatus) {
+  const orc = DB.orcamentos.find(o => o.id === id);
+  if (!orc) return;
+  if (orc.status === 'convertido' && novoStatus !== 'convertido') {
+    if (!confirm('Este orçamento já foi convertido em OS. Deseja mesmo alterar o status?')) return;
+  }
+  const agora = new Date().toISOString();
+  const labelAnt = ORC_STATUS_LABEL[orc.status] || orc.status;
+  const labelNov = ORC_STATUS_LABEL[novoStatus]  || novoStatus;
+  orc.status = novoStatus;
+  if (!orc.historico) orc.historico = [];
+  orc.historico.push({ evento: `Status alterado: ${labelAnt} → ${labelNov}`, data: agora });
+  save('orcamentos');
+  renderOrcamentos();
+  renderDashboard();
+  toast('Status atualizado!');
+}
+
+function converterOrcamentoEmOS(orcId) {
+  const orc = DB.orcamentos.find(o => o.id === orcId);
+  if (!orc) return;
+
+  if (orc.status === 'convertido') {
+    toast('Este orçamento já foi convertido em OS!', 'error'); return;
+  }
+
+  const osNum   = proximoNumOS();
+  const agora   = new Date().toISOString();
+  const dataHoje = new Date().toISOString().split('T')[0];
+
+  // Monta descrição dos serviços para o campo obs da OS
+  const servicosDesc = (orc.itens || []).map(i => `${i.nome} — R$ ${i.preco.toFixed(2).replace('.', ',')}`).join('\n');
+  const obsOS = [
+    `Convertido do Orçamento ${orc.num}`,
+    servicosDesc,
+    orc.obs ? `Obs: ${orc.obs}` : '',
+  ].filter(Boolean).join('\n');
+
+  const novaOS = {
+    id:        crypto.randomUUID(),
+    num:       osNum,
+    cliente:   orc.cliente,
+    clienteId: orc.clienteId || null,
+    tel:       '',
+    equip:     orc.equip   || '',
+    marca:     '',
+    modelo:    '',
+    serial:    '',
+    defeito:   orc.defeito || (orc.itens||[]).map(i => i.nome).join(', ') || '—',
+    acessorios:[],
+    obs:       obsOS,
+    status:    'recebido',
+    data:      dataHoje,
+    // vínculo com orçamento
+    orcId:     orc.id,
+    orcNum:    orc.num,
+    // financeiro herdado do orçamento
+    itens:     orc.itens    || [],
+    desconto:  orc.desconto || 0,
+    total:     orc.total    || 0,
+    pagamento: 'pendente',
+    historico: [
+      { evento: `OS criada a partir do Orçamento ${orc.num}`, data: agora },
+    ],
+  };
+
+  // Atualiza o orçamento
+  orc.status = 'convertido';
+  orc.osId   = novaOS.id;
+  orc.osNum  = osNum;
+  if (!orc.historico) orc.historico = [];
+  orc.historico.push({ evento: `Convertido na OS ${osNum}`, data: agora });
+
+  DB.ordens.push(novaOS);
+  confirmarNumOS();
+  save('ordens');
+  save('orcamentos');
+
+  renderOrdens();
+  renderOrcamentos();
+  renderDashboard();
+
+  toast(`✅ OS ${osNum} criada a partir do Orçamento ${orc.num}!`);
+}
+
+function renderOrcamentos() {
+  const tb      = document.getElementById('orcamentos-tbody');
+  const termo   = (document.getElementById('busca-orcamentos')?.value || '').trim().toLowerCase();
+  const filtroS = (document.getElementById('filtro-status-orc')?.value || '');
+  let lista     = DB.orcamentos.slice().reverse();
+
+  // Migração segura: garante status em registros antigos
+  lista.forEach(o => { if (!o.status) o.status = 'rascunho'; });
+
+  if (termo)   lista = lista.filter(o =>
     (o.num     || '').toLowerCase().includes(termo) ||
     (o.cliente || '').toLowerCase().includes(termo)
   );
+  if (filtroS) lista = lista.filter(o => (o.status || 'rascunho') === filtroS);
 
   setCount('count-orcamentos', lista.length, DB.orcamentos.length);
 
   if (!lista.length) {
     tb.innerHTML = DB.orcamentos.length
-      ? `<tr><td colspan="6"><div class="empty-state"><p>Nenhum orçamento encontrado para "<strong>${termo}</strong>".</p></div></td></tr>`
-      : `<tr><td colspan="6"><div class="empty-state"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Nenhum orçamento emitido.</p></div></td></tr>`;
+      ? `<tr><td colspan="7"><div class="empty-state"><p>Nenhum orçamento encontrado para os filtros aplicados.</p></div></td></tr>`
+      : `<tr><td colspan="7"><div class="empty-state"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><p>Nenhum orçamento emitido.</p></div></td></tr>`;
     return;
   }
 
-  tb.innerHTML = lista.map(o => `
+  tb.innerHTML = lista.map(o => {
+    const st = o.status || 'rascunho';
+    const statusLabel = ORC_STATUS_LABEL[st] || st;
+    const isConvertido = st === 'convertido';
+
+    // Badge colorido por status
+    const badgeClass = `orc-${st}`;
+
+    // Select de mudança de status (desabilitado se convertido)
+    const statusSelect = isConvertido
+      ? `<span class="badge ${badgeClass}"><span class="badge-dot"></span>${statusLabel}</span>`
+      : `<select onchange="mudarStatusOrc('${o.id}',this.value)"
+          style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:12px;padding:4px 6px;cursor:pointer">
+          ${Object.entries(ORC_STATUS_LABEL).filter(([v]) => v !== 'convertido').map(([v, l]) =>
+            `<option value="${v}" ${v === st ? 'selected' : ''}>${l}</option>`
+          ).join('')}
+        </select>`;
+
+    return `
     <tr>
       <td class="td-mono">${hl(o.num, termo)}</td>
-      <td><strong>${hl(o.cliente, termo)}</strong></td>
-      <td style="color:var(--muted);font-size:12px">${esc(o.data) || '—'}</td>
-      <td>${o.itens.map(i => `<span class="tag">${esc(i.nome)}</span>`).join('')}</td>
-      <td style="font-family:var(--mono);color:var(--teal)">R$ ${o.total.toFixed(2).replace('.', ',')}</td>
       <td>
+        <strong>${hl(o.cliente, termo)}</strong>
+        ${o.equip ? `<br><span style="color:var(--muted);font-size:11px">${esc(o.equip)}</span>` : ''}
+      </td>
+      <td style="color:var(--muted);font-size:12px">${esc(o.data) || '—'}</td>
+      <td>${statusSelect}</td>
+      <td>${(o.itens||[]).map(i => `<span class="tag">${esc(i.nome)}</span>`).join('')}</td>
+      <td style="font-family:var(--mono);color:var(--teal)">R$ ${(o.total||0).toFixed(2).replace('.', ',')}</td>
+      <td style="white-space:nowrap">
         <button class="btn btn-sm btn-secondary" onclick="verOrcamento('${o.id}')">Ver</button>
+        ${!isConvertido ? `<button class="btn btn-sm" style="background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal);margin-left:4px" onclick="converterOrcamentoEmOS('${o.id}')">⚙️ → OS</button>` : `<span style="font-size:11px;color:var(--teal);font-family:var(--mono);margin-left:6px">${esc(o.osNum||'')}</span>`}
         <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:none;margin-left:4px" onclick="excluirOrcamento('${o.id}')">✕</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function excluirOrcamento(id) {
@@ -4432,7 +4838,7 @@ function renderEstoque() {
 
 const PAGE_TITLES = { dashboard:'Dashboard', clientes:'Clientes', ordens:'Ordens de Serviço', orcamentos:'Orçamentos', laudos:'Laudos Técnicos', garantias:'Garantias', financeiro:'Financeiro', estoque:'Estoque', pcs:'PCs Montados', vendas:'Vendas', config:'Configurações' };
 const PAGE_ACTIONS = {
-  clientes:   '<button class="btn btn-primary" onclick="openModal(\'modal-cliente\')">+ Novo Cliente</button>',
+  clientes:   '<button class="btn btn-primary" onclick="abrirNovoCliente()">+ Novo Cliente</button>',
   ordens:     '<button class="btn btn-primary" onclick="abrirNovaOS()">+ Nova OS</button>',
   orcamentos: '<button class="btn btn-primary" onclick="abrirOrcamento()">+ Novo Orçamento</button>',
   laudos:     '<button class="btn btn-primary" onclick="abrirLaudo()">+ Novo Laudo</button>',
