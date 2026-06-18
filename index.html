@@ -3318,6 +3318,8 @@ async function loadFromSupabase() {
           localStorage.setItem('ct_estoque', JSON.stringify(DB.estoque));
         } else if (DB.hasOwnProperty(r.chave)) {
           DB[r.chave] = r.valor;
+          // Persiste no localStorage para funcionar offline após atualização da página
+          localStorage.setItem('ct_' + r.chave, JSON.stringify(r.valor));
         }
       });
     } else {
@@ -3345,7 +3347,7 @@ async function loadFromSupabase() {
 }
 
 function _loadFromLocalStorage() {
-  ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','contratos','orcHw','orcHw'].forEach(k => {
+  ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','contratos','orcHw'].forEach(k => {
     DB[k] = JSON.parse(localStorage.getItem('ct_' + k) || '[]');
   });
   DB.estoque  = JSON.parse(localStorage.getItem('ct_estoque')  || '[]');
@@ -3353,7 +3355,7 @@ function _loadFromLocalStorage() {
 }
 
 async function migrateLocalToSupabase() {
-  const localKeys = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','contratos','orcHw','orcHw'];
+  const localKeys = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','contratos','orcHw'];
   let hasData = false;
   localKeys.forEach(k => {
     const v = JSON.parse(localStorage.getItem('ct_' + k) || '[]');
