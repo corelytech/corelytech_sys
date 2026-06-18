@@ -3309,6 +3309,8 @@ async function loadFromSupabase() {
       headers: { 'Prefer': 'return=representation' }
     });
     if (rows && rows.length) {
+      // Índice de chaves que vieram do Supabase
+      const supaChaves = new Set(rows.map(r => r.chave));
       rows.forEach(r => {
         if (r.chave === 'servicos') {
           DB.servicos = r.valor;
@@ -3317,11 +3319,37 @@ async function loadFromSupabase() {
           DB.estoque = r.valor;
           localStorage.setItem('ct_estoque', JSON.stringify(DB.estoque));
         } else if (DB.hasOwnProperty(r.chave)) {
-          DB[r.chave] = r.valor;
-          // Persiste no localStorage para funcionar offline após atualização da página
-          localStorage.setItem('ct_' + r.chave, JSON.stringify(r.valor));
+          const supaData  = r.valor || [];
+          // Se o localStorage tem mais registros que o Supabase, o local é mais recente
+          const localRaw  = localStorage.getItem('ct_' + r.chave);
+          const localData = localRaw ? JSON.parse(localRaw) : [];
+          if (localData.length > supaData.length) {
+            // Local está à frente — usa local e agenda re-sync
+            DB[r.chave] = localData;
+            localStorage.setItem('ct_' + r.chave, JSON.stringify(localData));
+            SAVE_QUEUE[r.chave] = true;
+          } else {
+            DB[r.chave] = supaData;
+            localStorage.setItem('ct_' + r.chave, JSON.stringify(supaData));
+          }
         }
       });
+      // Chaves que existem no localStorage mas não vieram do Supabase: sincronizar
+      const allKeys = ['clientes','ordens','orcamentos','laudos','garantias','entradas','saidas','parcelamentos','pcs','vendas','historico','contratos','orcHw'];
+      allKeys.forEach(k => {
+        if (!supaChaves.has(k)) {
+          const localRaw = localStorage.getItem('ct_' + k);
+          const localData = localRaw ? JSON.parse(localRaw) : [];
+          if (localData.length > 0) {
+            DB[k] = localData;
+            SAVE_QUEUE[k] = true; // agenda upload para o Supabase
+          }
+        }
+      });
+      if (Object.keys(SAVE_QUEUE).length > 0) {
+        clearTimeout(SAVE_TIMER);
+        SAVE_TIMER = setTimeout(flushSaveQueue, 1000);
+      }
     } else {
       // primeira vez: migrar localStorage para Supabase
       await migrateLocalToSupabase();
@@ -3430,12 +3458,13 @@ function save(key) {
   SAVE_QUEUE[key] = true;
   syncSetStatus('syncing');
   clearTimeout(SAVE_TIMER);
-  SAVE_TIMER = setTimeout(flushSaveQueue, 800);
+  SAVE_TIMER = setTimeout(flushSaveQueue, 300);
 }
 
 async function flushSaveQueue() {
   if (!SUPA_TOKEN) return;
   const keys = Object.keys(SAVE_QUEUE);
+  if (!keys.length) return;
   SAVE_QUEUE = {};
   try {
     for (const k of keys) {
@@ -3445,11 +3474,31 @@ async function flushSaveQueue() {
   } catch(e) {
     console.error('Erro de sync:', e);
     syncSetStatus('error', 'Erro de sync');
-    // Recoloca na fila para retry
     keys.forEach(k => SAVE_QUEUE[k] = true);
     SAVE_TIMER = setTimeout(flushSaveQueue, 5000);
   }
 }
+
+// Garante sync antes de fechar/atualizar a página
+window.addEventListener('beforeunload', () => {
+  const keys = Object.keys(SAVE_QUEUE);
+  if (!keys.length || !SUPA_TOKEN) return;
+  // Usa sendBeacon para garantir envio mesmo ao fechar
+  keys.forEach(k => {
+    const body = JSON.stringify({
+      user_id: SUPA_UID,
+      chave: k,
+      valor: DB[k] || [],
+      updated_at: new Date().toISOString()
+    });
+    // Tenta PATCH via beacon (melhor esforço)
+    navigator.sendBeacon
+      && navigator.sendBeacon(
+          `${SUPA_URL}/rest/v1/ct_data?user_id=eq.${SUPA_UID}&chave=eq.${encodeURIComponent(k)}`,
+          new Blob([body], { type: 'application/json' })
+        );
+  });
+});
 
 // ═══════════════════════════════════════════════════════
 // SERVIÇOS
