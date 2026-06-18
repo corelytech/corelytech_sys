@@ -4488,15 +4488,12 @@ function renderOrcamentos() {
     // Select de mudança de status (desabilitado se convertido)
     const statusSelect = isConvertido
       ? `<span class="badge ${badgeClass}"><span class="badge-dot"></span>${statusLabel}</span>`
-      : (() => {
-          const corSt = st === 'aprovado' ? 'var(--green)' : st === 'enviado' ? 'var(--teal)' : st === 'recusado' ? 'var(--red)' : 'var(--muted)';
-          return `<select id="orc-st-${o.id}" onchange="mudarStatusOrc('${o.id}',this.value);this.style.color=({aprovado:'var(--green)',enviado:'var(--teal)',recusado:'var(--red)',rascunho:'var(--muted)'})[this.value]||'var(--text)'"
-            style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:${corSt};font-size:12px;padding:4px 6px;cursor:pointer;font-weight:700">
-            ${Object.entries(ORC_STATUS_LABEL).filter(([v]) => v !== 'convertido').map(([v, l]) =>
-              `<option value="${v}" ${v === st ? 'selected' : ''}>${l}</option>`
-            ).join('')}
-          </select>`;
-        })()`;
+      : `<select onchange="mudarStatusOrc('${o.id}',this.value)"
+          style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-size:12px;padding:4px 6px;cursor:pointer;font-weight:700">
+          ${Object.entries(ORC_STATUS_LABEL).filter(([v]) => v !== 'convertido').map(([v, l]) =>
+            '<option value="' + v + '" ' + (v === st ? 'selected' : '') + '>' + l + '</option>'
+          ).join('')}
+        </select>`;
 
     return `
     <tr>
