@@ -4101,6 +4101,11 @@ function excluirOS(id) {
   // 3. Remover a OS
   DB.ordens = DB.ordens.filter(o => o.id !== id);
   save('ordens');
+
+  // Flush imediato para o Supabase (não esperar o debounce)
+  clearTimeout(SAVE_TIMER);
+  flushSaveQueue();
+
   renderOrdens();
   if (typeof renderOrcamentos === 'function') renderOrcamentos();
   renderDashboard();
@@ -5203,7 +5208,7 @@ function renderDashboard() {
       { label: 'Total de orçamentos', qtd: orcTotal,              cor: 'var(--muted2)',   icon: '📝' },
       { label: 'Enviados ao cliente', qtd: orcEnviados.length,    cor: 'var(--blue)',     icon: '📤' },
       { label: 'Aprovados',           qtd: orcAprovados.length,   cor: 'var(--green)',    icon: '✅' },
-      { label: 'Convertidos em OS',   qtd: orcConvertidos.length, cor: 'var(--purple2)',  icon: '🔄' },
+      { label: 'Convertidos em OS', qtd: orcConvertidos.filter(o => (DB.ordens||[]).some(os => os.orcId === o.id)).length, cor: 'var(--purple2)', icon: '🔄' },
       { label: 'OS concluídas',       qtd: (DB.ordens||[]).filter(o => ['finalizado','entregue'].includes(o.status) && o.orcId).length, cor: 'var(--teal)', icon: '✔️' },
       { label: 'Receita registrada',  qtd: entradasOS.length,     cor: 'var(--amber)',    icon: '💰' },
     ];
