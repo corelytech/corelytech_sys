@@ -4074,19 +4074,37 @@ function excluirOS(id) {
   const os = DB.ordens.find(o => o.id === id);
   if (!os) return;
 
-  // Aviso extra se já tem receita registrada no financeiro
   const temReceita = (DB.entradas || []).some(e => e.osId === id);
-  const aviso = temReceita
-    ? `\n\n⚠️ Atenção: esta OS já possui uma receita lançada no Financeiro.\nA entrada financeira NÃO será removida automaticamente.`
-    : '';
+  const orcOrigem  = os.orcId ? (DB.orcamentos || []).find(o => o.id === os.orcId) : null;
 
-  if (!confirm(`Excluir a OS ${os.num} — ${os.cliente}?\n\nEsta ação não pode ser desfeita.${aviso}`)) return;
+  let aviso = `Excluir a OS ${os.num} — ${os.cliente}?\n\nEsta ação não pode ser desfeita.`;
+  if (temReceita) aviso += '\n\n💰 A receita lançada no financeiro também será removida.';
+  if (orcOrigem)  aviso += `\n\n📋 O orçamento ${orcOrigem.num} voltará ao status anterior.`;
 
+  if (!confirm(aviso)) return;
+
+  // 1. Remover entrada financeira vinculada à OS
+  if (temReceita) {
+    DB.entradas = (DB.entradas || []).filter(e => e.osId !== id);
+    save('entradas');
+  }
+
+  // 2. Reverter status do orçamento de origem
+  if (orcOrigem) {
+    orcOrigem.status = 'aprovado'; // era aprovado antes de ser convertido
+    delete orcOrigem.osId;
+    if (!orcOrigem.historico) orcOrigem.historico = [];
+    orcOrigem.historico.push({ evento: `OS ${os.num} excluída — orçamento revertido para Aprovado`, data: new Date().toISOString() });
+    save('orcamentos');
+  }
+
+  // 3. Remover a OS
   DB.ordens = DB.ordens.filter(o => o.id !== id);
   save('ordens');
   renderOrdens();
+  if (typeof renderOrcamentos === 'function') renderOrcamentos();
   renderDashboard();
-  toast(`OS ${os.num} excluída`);
+  toast(`OS ${os.num} excluída. ${orcOrigem ? `Orçamento ${orcOrigem.num} revertido.` : ''}`);
 }
 
 function mudarStatus(id, status) {
