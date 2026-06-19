@@ -561,6 +561,7 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 #sync-indicator.offline .dot{background:var(--muted)}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -1392,6 +1393,8 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
       <!-- Tabs -->
       <div class="fin-tabs">
         <button class="fin-tab active" onclick="finTab('controle')">📊 Controle Financeiro</button>
+        <button class="fin-tab" onclick="finTab('graficos')">📈 Gráficos</button>
+        <button class="fin-tab" onclick="finTab('relatorios')">📋 Relatórios</button>
         <button class="fin-tab" onclick="finTab('entradas')">⬆ Entradas</button>
         <button class="fin-tab" onclick="finTab('saidas')">⬇ Saídas</button>
         <button class="fin-tab" onclick="finTab('fluxo')">🔄 Fluxo de Caixa</button>
@@ -1400,30 +1403,41 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
 
       <!-- ── CONTROLE FINANCEIRO ── -->
       <div class="fin-section active" id="fin-controle">
-        <div class="grid-4" style="margin-bottom:20px">
+        <!-- Linha 1: saldo acumulado + mês atual -->
+        <div class="grid-4" style="margin-bottom:16px">
           <div class="stat-card green">
             <div class="stat-val" id="fin-saldo-atual" style="color:var(--green);font-size:22px">R$ 0,00</div>
-            <div class="stat-label">Saldo Atual</div>
-            <div class="stat-sub">Entradas − Saídas</div>
+            <div class="stat-label">Saldo Acumulado</div>
+            <div class="stat-sub">Total entradas − saídas</div>
           </div>
           <div class="stat-card teal">
             <div class="stat-val" id="fin-receita-mensal" style="color:var(--teal);font-size:22px">R$ 0,00</div>
-            <div class="stat-label">Receita Mensal</div>
+            <div class="stat-label">Receita do Mês</div>
             <div class="stat-sub" id="fin-mes-label">Este mês</div>
           </div>
-          <div class="stat-card purple">
-            <div class="stat-val" id="fin-lucro-bruto" style="color:var(--purple2);font-size:22px">R$ 0,00</div>
-            <div class="stat-label">Lucro Bruto</div>
-            <div class="stat-sub">Receitas − Custos diretos</div>
+          <div class="stat-card red" style="--red-dim:rgba(239,68,68,.08)">
+            <div class="stat-val" id="fin-despesa-mensal" style="color:var(--red);font-size:22px">R$ 0,00</div>
+            <div class="stat-label">Despesa do Mês</div>
+            <div class="stat-sub" id="fin-mes-label-desp">Este mês</div>
           </div>
           <div class="stat-card amber">
-            <div class="stat-val" id="fin-lucro-liquido" style="color:var(--amber);font-size:22px">R$ 0,00</div>
-            <div class="stat-label">Lucro Líquido</div>
-            <div class="stat-sub">Após todas as despesas</div>
+            <div class="stat-val" id="fin-lucro-mes" style="font-size:22px">R$ 0,00</div>
+            <div class="stat-label">Lucro do Mês</div>
+            <div class="stat-sub">Receita − Despesa do mês</div>
           </div>
         </div>
-        <!-- Receita Prevista de Hardware -->
+        <!-- Linha 2: acumulado -->
         <div class="grid-4" style="margin-bottom:16px">
+          <div class="stat-card purple">
+            <div class="stat-val" id="fin-lucro-bruto" style="color:var(--purple2);font-size:20px">R$ 0,00</div>
+            <div class="stat-label">Lucro Bruto Total</div>
+            <div class="stat-sub">Receitas − Custos de compra/frete</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-val" id="fin-lucro-liquido" style="color:var(--amber);font-size:20px">R$ 0,00</div>
+            <div class="stat-label">Lucro Líquido Total</div>
+            <div class="stat-sub">Receitas − Todas as saídas</div>
+          </div>
           <div class="stat-card amber">
             <div class="stat-val" id="fin-hw-prevista" style="color:var(--amber);font-size:20px">R$ 0,00</div>
             <div class="stat-label">Receita Prevista HW</div>
@@ -1433,16 +1447,6 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
             <div class="stat-val" id="fin-hw-aprovados" style="color:var(--teal)">0</div>
             <div class="stat-label">Orç. Hardware Aprovados</div>
             <div class="stat-sub" id="fin-hw-aprovados-sub">Aguardando conversão em venda</div>
-          </div>
-          <div class="stat-card green">
-            <div class="stat-val" id="fin-hw-total-orcado" style="color:var(--green);font-size:20px">R$ 0,00</div>
-            <div class="stat-label">Total Orçado em Hardware</div>
-            <div class="stat-sub">Soma de todos os orçamentos HW</div>
-          </div>
-          <div class="stat-card purple">
-            <div class="stat-val" id="fin-hw-ticket" style="color:var(--purple2);font-size:20px">R$ 0,00</div>
-            <div class="stat-label">Ticket Médio HW</div>
-            <div class="stat-sub">Valor médio por orçamento</div>
           </div>
         </div>
 
@@ -1461,6 +1465,75 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
             <span class="card-title">Formas de Pagamento Recebidas</span>
           </div>
           <div id="fin-resumo-pgto" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding-top:4px"></div>
+        </div>
+      </div>
+
+      <!-- ── GRÁFICOS ── -->
+      <div class="fin-section" id="fin-graficos">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">📈 Evolução Mensal — Receita</span>
+              <select class="filter-select" id="graf-ano-receita" onchange="renderGraficos()" style="font-size:12px"></select>
+            </div>
+            <canvas id="graf-receita" height="200"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">💰 Evolução Mensal — Lucro</span>
+              <select class="filter-select" id="graf-ano-lucro" onchange="renderGraficos()" style="font-size:12px"></select>
+            </div>
+            <canvas id="graf-lucro" height="200"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">⚖️ Entradas × Saídas — Últimos 6 meses</span>
+          </div>
+          <canvas id="graf-entradas-saidas" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- ── RELATÓRIOS ── -->
+      <div class="fin-section" id="fin-relatorios">
+        <div class="grid-3" style="margin-bottom:16px">
+          <!-- Lucro por categoria -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">📂 Lucro por Categoria</span></div>
+            <div id="rel-cat"></div>
+          </div>
+          <!-- Lucro por serviço (OS) -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">🔧 Receita por Serviço (OS)</span></div>
+            <div id="rel-servico"></div>
+          </div>
+          <!-- Lucro por produto (Vendas) -->
+          <div class="card">
+            <div class="card-header"><span class="card-title">📦 Lucro por Produto (Vendas)</span></div>
+            <div id="rel-produto"></div>
+          </div>
+        </div>
+        <!-- Futuras - receitas, parcelas, despesas -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">🔮 Fluxo Futuro — Receitas, Parcelas e Despesas a Receber</span></div>
+          <div class="grid-3" style="margin-bottom:16px">
+            <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius-sm);padding:14px">
+              <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px">Receitas futuras (OS)</div>
+              <div id="rel-fut-receitas" style="font-size:20px;font-weight:800;color:var(--green);font-family:var(--mono)">R$ 0,00</div>
+              <div id="rel-fut-receitas-sub" style="font-size:11px;color:var(--muted);margin-top:3px">OS finalizadas s/ receita</div>
+            </div>
+            <div style="background:var(--purple-dim);border:1px solid var(--purple);border-radius:var(--radius-sm);padding:14px">
+              <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px">Parcelas futuras a receber</div>
+              <div id="rel-fut-parcelas" style="font-size:20px;font-weight:800;color:var(--purple2);font-family:var(--mono)">R$ 0,00</div>
+              <div id="rel-fut-parcelas-sub" style="font-size:11px;color:var(--muted);margin-top:3px">Entradas parceladas em aberto</div>
+            </div>
+            <div style="background:var(--red-dim);border:1px solid var(--red);border-radius:var(--radius-sm);padding:14px">
+              <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:4px">Despesas futuras</div>
+              <div id="rel-fut-despesas" style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--mono)">R$ 0,00</div>
+              <div id="rel-fut-despesas-sub" style="font-size:11px;color:var(--muted);margin-top:3px">Saídas com data futura</div>
+            </div>
+          </div>
+          <div id="rel-fut-lista"></div>
         </div>
       </div>
 
@@ -2810,7 +2883,7 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-venda')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarVenda()">Salvar Venda</button>
+      <button class="btn btn-primary" id="btn-salvar-venda" onclick="salvarVenda()">Salvar Venda</button>
     </div>
   </div>
 </div>
@@ -3118,6 +3191,107 @@ mark{background:var(--purple-dim);color:var(--purple2);border-radius:2px;padding
       <button class="btn btn-secondary" onclick="recusarReceitaOS()">Não registrar agora</button>
       <button class="btn btn-primary" style="background:var(--green)" onclick="confirmarReceitaOS()">
         💰 Confirmar receita
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: SAÍDA FINANCEIRA AO CADASTRAR PRODUTO ═══════ -->
+<div class="modal-overlay" id="modal-saida-estoque">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2>🛒 Registrar Saída de Compra</h2>
+      <button class="close-btn" onclick="recusarSaidaEstoque()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Resumo do produto -->
+      <div style="background:linear-gradient(135deg,var(--purple-dim),var(--teal-dim));border:1px solid var(--purple);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Produto cadastrado no estoque</div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--purple2)" id="mse-codigo"></span>
+          <span style="font-size:15px;font-weight:700;color:var(--text)" id="mse-nome"></span>
+          <span style="font-size:12px;color:var(--muted)" id="mse-cat"></span>
+        </div>
+        <div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:2px">Valor pago</div>
+            <div id="mse-vlpago-display" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--amber)">R$ 0,00</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:2px">Preço anunciado</div>
+            <div id="mse-vlanunciado-display" style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--teal)">R$ 0,00</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:600;margin-bottom:2px">Lucro esperado</div>
+            <div id="mse-lucro-display" style="font-family:var(--mono);font-size:16px;font-weight:800">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos da saída -->
+      <div class="section-title">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+        Detalhes da saída financeira
+      </div>
+
+      <div class="form-row cols-3">
+        <div class="field">
+          <label>Categoria</label>
+          <select id="mse-categoria">
+            <option value="Compra de produtos">Compra de produtos</option>
+            <option value="Fretes">Fretes</option>
+            <option value="Insumos">Insumos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Descrição</label>
+          <input id="mse-descricao" placeholder="Ex: Compra GTX 1060 6GB — OLX">
+        </div>
+        <div class="field">
+          <label>Data da compra</label>
+          <input id="mse-data" type="date">
+        </div>
+      </div>
+
+      <div class="form-row cols-3">
+        <div class="field">
+          <label>Valor (R$)</label>
+          <input id="mse-valor" type="number" min="0" step="0.01" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label>Forma de pagamento</label>
+          <select id="mse-pgto">
+            <option value="PIX">PIX</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Transferência">Transferência</option>
+            <option value="Boleto">Boleto</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Parcelas</label>
+          <select id="mse-parcelas">
+            <option value="1">À vista</option>
+            <option value="2">2×</option>
+            <option value="3">3×</option>
+            <option value="4">4×</option>
+            <option value="6">6×</option>
+            <option value="12">12×</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:var(--amber-dim,rgba(245,158,11,.08));border:1px solid var(--amber);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--amber)">
+        💡 Ao confirmar, uma <strong>saída</strong> será criada automaticamente no Módulo Financeiro na categoria <strong>Compra de produtos</strong>, registrando o custo desta aquisição.
+      </div>
+
+      <input type="hidden" id="mse-prod-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="recusarSaidaEstoque()">Não registrar agora</button>
+      <button class="btn btn-primary" style="background:var(--purple)" onclick="confirmarSaidaEstoque()">
+        🛒 Confirmar saída
       </button>
     </div>
   </div>
@@ -5994,26 +6168,104 @@ function salvarProduto() {
 
   if (editId) {
     const idx = DB.estoque.findIndex(x => x.id === editId);
-    if (idx >= 0) DB.estoque[idx] = produto;
+    if (idx >= 0) {
+      const antigo = DB.estoque[idx];
+      DB.estoque[idx] = produto;
+
+      const saidaVinculada = (DB.saidas||[]).find(s => s.estoqueId === editId);
+
+      if (saidaVinculada) {
+        // Já existia saída — atualiza valor/descrição se o custo mudou
+        if (antigo.vlPago !== produto.vlPago) {
+          saidaVinculada.valor = produto.vlPago;
+          saidaVinculada.desc  = `Compra ${produto.nome}${produto.marca ? ' ' + produto.marca : ''}`.trim();
+          save('saidas');
+          toast('💰 Saída financeira atualizada com o novo custo.');
+        }
+      } else if (produto.vlPago > 0) {
+        // Não existia saída ainda (produto antigo, ou cadastrado sem custo) —
+        // agora que há vlPago > 0, cria a saída retroativamente.
+        if (!DB.saidas) DB.saidas = [];
+        const fornecedor = produto.fornecedor ? ` — ${produto.fornecedor}` : '';
+        DB.saidas.push({
+          id:        crypto.randomUUID(),
+          cat:       'Compra de produtos',
+          desc:      ('Compra ' + produto.nome + (produto.marca ? ' ' + produto.marca : '') + (produto.modelo ? ' ' + produto.modelo : '') + fornecedor).trim(),
+          data:      produto.dtCompra || new Date().toISOString().split('T')[0],
+          valor:     produto.vlPago,
+          pgto:      'PIX',
+          obs:       'Estoque: ' + (produto.codigo || produto.nome),
+          parcelas:  1,
+          taxa:      0,
+          estoqueId: produto.id,
+        });
+        save('saidas');
+        try { renderSaidas(); } catch(e) {}
+        try { renderControle(); } catch(e) {}
+        toast('💰 Saída de R$ ' + produto.vlPago.toFixed(2).replace('.',',') + ' registrada no financeiro!');
+      }
+    }
   } else {
     DB.estoque.push(produto);
     confirmarCodigo();
-  }
+    }
 
   save('estoque');
   closeModal('modal-produto');
-  renderEstoque();
-  renderDashboard();
+  try { renderEstoque(); } catch(e) {}
+  try { renderDashboard(); } catch(e) {}
   toast(editId ? 'Produto atualizado!' : 'Produto cadastrado!');
+
+  // Registrar saída financeira automaticamente ao CADASTRAR (não editar) produto com custo
+  if (!editId && produto.vlPago > 0) {
+    const jaExiste = (DB.saidas||[]).some(s => s.estoqueId === produto.id);
+      if (!jaExiste) {
+      if (!DB.saidas) DB.saidas = [];
+      const fornecedor = produto.fornecedor ? ` — ${produto.fornecedor}` : '';
+      const novaSaida = {
+        id:        crypto.randomUUID(),
+        cat:       'Compra de produtos',
+        desc:      ('Compra ' + produto.nome + (produto.marca ? ' ' + produto.marca : '') + (produto.modelo ? ' ' + produto.modelo : '') + fornecedor).trim(),
+        data:      produto.dtCompra || new Date().toISOString().split('T')[0],
+        valor:     produto.vlPago,
+        pgto:      'PIX',
+        obs:       'Estoque: ' + (produto.codigo || produto.nome),
+        parcelas:  1,
+        taxa:      0,
+        estoqueId: produto.id,
+      };
+      DB.saidas.push(novaSaida);
+              save('saidas');
+          try {
+        renderSaidas();
+            } catch(e) {
+            }
+      try { renderControle(); } catch(e) {}
+      toast('💰 Saída de R$ ' + produto.vlPago.toFixed(2).replace('.',',') + ' registrada no financeiro!');
+    } else {
+        }
+  } else {
+    }
 }
 
 function excluirProduto(id) {
-  if (!confirm('Excluir este produto do estoque?')) return;
+  const prod = DB.estoque.find(x => x.id === id);
+  if (!prod) return;
+  const temSaida = (DB.saidas||[]).some(s => s.estoqueId === id);
+  const aviso = temSaida
+    ? `Excluir o produto "${prod.nome}"?\n\n💰 A saída financeira vinculada também será removida.`
+    : `Excluir o produto "${prod.nome}"?`;
+  if (!confirm(aviso)) return;
+  // Remove saída vinculada
+  if (temSaida) {
+    DB.saidas = (DB.saidas||[]).filter(s => s.estoqueId !== id);
+    save('saidas');
+  }
   DB.estoque = DB.estoque.filter(x => x.id !== id);
   save('estoque');
-  renderEstoque();
-  renderDashboard();
-  toast('Produto removido');
+  try { renderEstoque(); } catch(e) {}
+  try { renderDashboard(); } catch(e) {}
+  toast('Produto e lançamento financeiro removidos.');
 }
 
 function mudarStatusProduto(id, status) {
@@ -6036,6 +6288,7 @@ function limparFiltrosEstoque() {
 
 function renderEstoque() {
   const tb     = document.getElementById('estoque-tbody');
+  if (!tb) return; // página não está ativa — não renderiza para não lançar erros
   const termo  = (document.getElementById('busca-estoque')?.value  || '').trim().toLowerCase();
   const cat    = (document.getElementById('filtro-cat-estoque')?.value    || '').trim().toLowerCase();
   const status = (document.getElementById('filtro-status-estoque')?.value || '').trim().toLowerCase();
@@ -6055,11 +6308,15 @@ function renderEstoque() {
 
   // Atualiza stats
   const emEstoque = DB.estoque.filter(p => p.status !== 'Vendido');
-  document.getElementById('est-total').textContent      = emEstoque.length;
-  document.getElementById('est-reservado').textContent  = DB.estoque.filter(p => p.status === 'Reservado').length;
-  document.getElementById('est-consignado').textContent = DB.estoque.filter(p => p.status === 'Consignado').length;
+  const elTotal = document.getElementById('est-total');
+  const elRes   = document.getElementById('est-reservado');
+  const elCons  = document.getElementById('est-consignado');
+  const elValor = document.getElementById('est-valor');
+  if (elTotal) elTotal.textContent = emEstoque.length;
+  if (elRes)   elRes.textContent   = DB.estoque.filter(p => p.status === 'Reservado').length;
+  if (elCons)  elCons.textContent  = DB.estoque.filter(p => p.status === 'Consignado').length;
   const totalAnunciado = emEstoque.reduce((s, p) => s + (p.vlAnunciado || 0), 0);
-  document.getElementById('est-valor').textContent = 'R$ ' + totalAnunciado.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+  if (elValor) elValor.textContent = 'R$ ' + totalAnunciado.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
   if (!lista.length) {
     tb.innerHTML = DB.estoque.length
@@ -6350,14 +6607,17 @@ editarProduto = function(id) {
 };
 
 // Ao salvar produto novo, migra fotos de '__new__' para o id real
+// e oferece registrar a saída financeira se houver vlPago
 const _origSalvarProduto = salvarProduto;
 salvarProduto = function() {
   const editId = document.getElementById('modal-produto').dataset.editId;
   const isNovo = !editId;
+  const vlPago = parseFloat(document.getElementById('p-vlpago').value) || 0;
+
   _origSalvarProduto();
 
   if (isNovo) {
-    // Último item inserido
+    // Migra fotos de '__new__' para o id real
     const ultimo = DB.estoque[DB.estoque.length - 1];
     if (ultimo && fotosDB['__new__']) {
       fotosDB[String(ultimo.id)] = fotosDB['__new__'];
@@ -6365,8 +6625,84 @@ salvarProduto = function() {
       salvarFotos();
       renderEstoque();
     }
+    // Saída financeira é gerenciada pelo _origSalvarProduto
   }
 };
+
+// ── Modal de saída ao cadastrar produto ─────────────────
+function abrirModalSaidaEstoque(prod) {
+  const vlPago      = Number(prod.vlPago) || 0;
+  const vlAnunciado = Number(prod.vlAnunciado) || 0;
+  const lucro       = vlAnunciado - vlPago;
+
+  document.getElementById('mse-prod-id').value       = prod.id;
+  document.getElementById('mse-codigo').textContent  = prod.codigo || '';
+  document.getElementById('mse-nome').textContent    = prod.nome   || '—';
+  document.getElementById('mse-cat').textContent     = prod.categoria ? `· ${prod.categoria}` : '';
+
+  document.getElementById('mse-vlpago-display').textContent     = brl(vlPago);
+  document.getElementById('mse-vlanunciado-display').textContent = brl(vlAnunciado);
+
+  const lucroEl = document.getElementById('mse-lucro-display');
+  lucroEl.textContent  = (lucro >= 0 ? '+' : '') + brl(lucro);
+  lucroEl.style.color  = lucro >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Pré-preenche campos
+  document.getElementById('mse-valor').value      = vlPago.toFixed(2);
+  document.getElementById('mse-data').value       = prod.dtCompra || new Date().toISOString().split('T')[0];
+  document.getElementById('mse-pgto').value       = 'PIX';
+  document.getElementById('mse-parcelas').value   = '1';
+  document.getElementById('mse-categoria').value  = 'Compra de produtos';
+
+  // Descrição automática
+  const fornecedor = prod.fornecedor ? ` — ${prod.fornecedor}` : '';
+  document.getElementById('mse-descricao').value =
+    `Compra ${prod.nome}${prod.marca ? ' ' + prod.marca : ''}${prod.modelo ? ' ' + prod.modelo : ''}${fornecedor}`.trim();
+
+  openModal('modal-saida-estoque');
+}
+
+function confirmarSaidaEstoque() {
+  const prodId  = document.getElementById('mse-prod-id').value;
+  const cat     = document.getElementById('mse-categoria').value;
+  const desc    = document.getElementById('mse-descricao').value.trim();
+  const data    = document.getElementById('mse-data').value;
+  const valor   = parseFloat(document.getElementById('mse-valor').value) || 0;
+  const pgto    = document.getElementById('mse-pgto').value;
+  const parcelas = parseInt(document.getElementById('mse-parcelas').value) || 1;
+
+  if (!desc)    { toast('Informe uma descrição', 'error'); return; }
+  if (!data)    { toast('Informe a data', 'error'); return; }
+  if (valor <= 0) { toast('Valor deve ser maior que zero', 'error'); return; }
+
+  const prod = (DB.estoque || []).find(p => p.id === prodId);
+
+  DB.saidas.push({
+    id:       gerarIdFin(),
+    cat,
+    desc,
+    data,
+    valor,
+    pgto,
+    obs:      prod ? `Estoque: ${prod.codigo || prod.nome}` : '',
+    parcelas,
+    taxa:     0,
+    estoqueId: prodId,   // vínculo com o produto
+  });
+  save('saidas');
+
+  addHistorico('saida', { cat, desc, data, valor, pgto });
+
+  closeModal('modal-saida-estoque');
+  renderSaidas?.();
+  renderControle?.();
+  toast(`🛒 Saída de ${brl(valor)} registrada no Financeiro!`);
+}
+
+function recusarSaidaEstoque() {
+  closeModal('modal-saida-estoque');
+  toast('Saída não registrada. Você pode lançar manualmente no Financeiro.');
+}
 
 // ── Thumbnail strip na tabela ────────────────────────────
 function renderFotoThumb(prodId) {
@@ -6558,10 +6894,12 @@ function finTab(id){
   document.querySelectorAll('.fin-section').forEach(s=>s.classList.remove('active'));
   document.querySelector(`.fin-tab[onclick="finTab('${id}')"]`).classList.add('active');
   document.getElementById('fin-'+id).classList.add('active');
-  if(id==='controle') renderControle();
-  if(id==='entradas') renderEntradas();
-  if(id==='saidas')   renderSaidas();
-  if(id==='fluxo')    initFluxo();
+  if(id==='controle')    renderControle();
+  if(id==='graficos')    renderGraficos();
+  if(id==='relatorios')  renderRelatorios();
+  if(id==='entradas')    renderEntradas();
+  if(id==='saidas')      renderSaidas();
+  if(id==='fluxo')       initFluxo();
   if(id==='parcelamentos') renderParcelamentos();
 }
 
@@ -6671,16 +7009,19 @@ function salvarEntrada(){
 }
 
 function renderEntradas(){
-  const busca   = (document.getElementById('busca-entradas').value||'').toLowerCase();
-  const filtCat = document.getElementById('filtro-cat-ent').value;
-  let lista = DB.entradas.filter(e=>{
+  const tbody = document.getElementById('entradas-tbody');
+  if (!tbody) return; // página não está ativa — dados já salvos
+
+  const busca   = (document.getElementById('busca-entradas')?.value||'').toLowerCase();
+  const filtCat = (document.getElementById('filtro-cat-ent')?.value||'');
+  let lista = (DB.entradas||[]).filter(e=>{
     const ok1 = !filtCat || e.cat===filtCat;
     const ok2 = !busca   || e.desc.toLowerCase().includes(busca) || e.cat.toLowerCase().includes(busca)
                          || (e.permuta?.desc||'').toLowerCase().includes(busca);
     return ok1&&ok2;
   }).sort((a,b)=>b.data.localeCompare(a.data));
-  document.getElementById('count-entradas').textContent = lista.length + ' registro(s)';
-  const tbody = document.getElementById('entradas-tbody');
+  const countEntEl = document.getElementById('count-entradas');
+  if (countEntEl) countEntEl.textContent = lista.length + ' registro(s)';
   if(!lista.length){
     tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><p>Nenhuma entrada registrada.</p></div></td></tr>`;
     return;
@@ -6748,15 +7089,23 @@ function salvarSaida(){
 }
 
 function renderSaidas(){
-  const busca   = (document.getElementById('busca-saidas').value||'').toLowerCase();
-  const filtCat = document.getElementById('filtro-cat-sai').value;
-  let lista = DB.saidas.filter(s=>{
-    const ok1 = !filtCat || s.cat===filtCat;
-    const ok2 = !busca   || s.desc.toLowerCase().includes(busca) || s.cat.toLowerCase().includes(busca);
-    return ok1&&ok2;
-  }).sort((a,b)=>b.data.localeCompare(a.data));
-  document.getElementById('count-saidas').textContent = lista.length + ' registro(s)';
   const tbody = document.getElementById('saidas-tbody');
+  if (!tbody) return; // página não está ativa — saída já foi salva, renderiza quando o usuário abrir a aba
+
+  const buscaEl   = document.getElementById('busca-saidas');
+  const filtCatEl = document.getElementById('filtro-cat-sai');
+  const busca     = (buscaEl?.value   || '').toLowerCase();
+  const filtCat   = (filtCatEl?.value || '');
+
+  let lista = (DB.saidas||[]).filter(s => {
+    const ok1 = !filtCat || s.cat === filtCat;
+    const ok2 = !busca   || (s.desc||'').toLowerCase().includes(busca) || (s.cat||'').toLowerCase().includes(busca);
+    return ok1 && ok2;
+  }).sort((a,b) => (b.data||'').localeCompare(a.data||''));
+
+  const countEl = document.getElementById('count-saidas');
+  if (countEl) countEl.textContent = lista.length + ' registro(s)';
+
   if(!lista.length){
     tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><p>Nenhuma saída registrada.</p></div></td></tr>`;
     return;
@@ -6923,53 +7272,47 @@ function renderControle(){
   // Helper seguro: lê liquido com fallbacks para compatibilidade com registros antigos
   const liq = e => Number(e.liquido ?? e.liq ?? e.valor ?? 0);
 
-  const totalEnt    = DB.entradas.reduce((a,e) => a + liq(e), 0);
-  const totalSai    = DB.saidas.reduce((a,s) => a + (Number(s.valor)||0), 0);
-  const saldoAtual  = totalEnt - totalSai;
+  const totalEnt   = DB.entradas.reduce((a,e) => a + liq(e), 0);
+  const totalSai   = DB.saidas.reduce((a,s)   => a + (Number(s.valor)||0), 0);
+  const saldoAtual = totalEnt - totalSai;
+
   // Receita prevista de hardware (orçamentos aprovados ainda não convertidos em entrada)
   const hwOrcPrevista = (DB.orcHw||[])
     .filter(o => o.status === 'aprovado')
     .reduce((s,o) => s + (Number(o.total)||0), 0);
 
-  // Custos diretos = saídas de compra/frete + custo real dos produtos vendidos (Vendas e Contratos)
+  // Custos diretos = saídas categorizadas como compra/frete (já lançadas no financeiro)
+  // NÃO duplicamos o vlPago do estoque aqui — isso é para os Relatórios de margem
   const custosSaidas = DB.saidas
-    .filter(s=>['Compra de produtos','Fretes'].includes(s.cat))
+    .filter(s => ['Compra de produtos','Fretes'].includes(s.cat))
     .reduce((a,s) => a + (Number(s.valor)||0), 0);
 
-  // Custo dos produtos vendidos via módulo Vendas (vlPago do estoque vinculado)
-  const custosVendas = (DB.vendas||[])
-    .filter(v => v.status === 'Concluída' && v.estoqueId)
-    .reduce((a,v) => {
-      const ep = (DB.estoque||[]).find(x => x.id === v.estoqueId);
-      return a + (ep ? (Number(ep.vlPago || ep.custo || 0)) : (Number(v.custo)||0));
-    }, 0)
-    // Vendas sem estoque vinculado mas com custo informado manualmente
-    + (DB.vendas||[])
-      .filter(v => v.status === 'Concluída' && !v.estoqueId && v.custo)
-      .reduce((a,v) => a + (Number(v.custo)||0), 0);
+  // Lucro Bruto = receitas totais − custos de aquisição/frete lançados
+  const lucroBruto = totalEnt - custosSaidas;
 
-  // Custo dos produtos vendidos via Contas a Receber (vlPago do estoque vinculado)
-  const custosContratos = (DB.contratos||[])
-    .filter(c => c.estoqueId)
-    .reduce((a,c) => {
-      const ep = (DB.estoque||[]).find(x => x.id === c.estoqueId);
-      return a + (ep ? (Number(ep.vlPago || ep.custo || 0)) : 0);
-    }, 0);
+  // Lucro Líquido = receitas totais − todas as saídas
+  const lucroLiq = totalEnt - totalSai;
 
-  const custosDiretos = custosSaidas + custosVendas + custosContratos;
-  const lucroBruto = totalEnt - custosDiretos;
-  // Lucro líquido = receitas − todas saídas − custos de produtos vendidos não lançados como saída
-  const lucroLiq   = totalEnt - totalSai - custosVendas - custosContratos;
-
-  // Receita do mês atual
-  const agora = new Date();
+  // Receita e despesa do mês atual
+  const agora   = new Date();
   const prefMes = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+
   const receitaMes = DB.entradas
     .filter(e => (e.data||'').startsWith(prefMes))
     .reduce((a,e) => a + liq(e), 0);
 
-  const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  document.getElementById('fin-mes-label').textContent = meses[agora.getMonth()]+'/'+agora.getFullYear();
+  const despesaMes = DB.saidas
+    .filter(s => (s.data||'').startsWith(prefMes))
+    .reduce((a,s) => a + (Number(s.valor)||0), 0);
+
+  const lucroMes = receitaMes - despesaMes;
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesLabel = meses[agora.getMonth()] + '/' + agora.getFullYear();
+  const elMesR = document.getElementById('fin-mes-label');
+  const elMesD = document.getElementById('fin-mes-label-desp');
+  if (elMesR) elMesR.textContent = mesLabel;
+  if (elMesD) elMesD.textContent = mesLabel;
 
   const setStat = (id,v,pos)=>{
     const el=document.getElementById(id);
@@ -6977,23 +7320,26 @@ function renderControle(){
     el.textContent=brl(v);
     el.style.color=v>=0?`var(--${pos||'green'})`:'var(--red)';
   };
-  setStat('fin-saldo-atual',   saldoAtual,  'green');
-  setStat('fin-receita-mensal',receitaMes,  'teal');
-  setStat('fin-lucro-bruto',   lucroBruto,  'purple2');
-  setStat('fin-lucro-liquido', lucroLiq,    'amber');
+  setStat('fin-saldo-atual',    saldoAtual,   'green');
+  setStat('fin-receita-mensal', receitaMes,   'teal');
+  setStat('fin-despesa-mensal', despesaMes,   'red');
+  const lucroMesEl = document.getElementById('fin-lucro-mes');
+  if(lucroMesEl){
+    lucroMesEl.textContent = brl(lucroMes);
+    lucroMesEl.style.color = lucroMes >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+  setStat('fin-lucro-bruto',    lucroBruto,   'purple2');
+  setStat('fin-lucro-liquido',  lucroLiq,     'amber');
 
   // Cards de Hardware
   const hwOrcsAll    = DB.orcHw || [];
   const hwAprov      = hwOrcsAll.filter(o => o.status === 'aprovado');
   const hwTotalOrc   = hwOrcsAll.reduce((s,o) => s + (Number(o.total)||0), 0);
-  const hwTicketFin  = hwOrcsAll.length > 0 ? hwTotalOrc / hwOrcsAll.length : 0;
-  setStat('fin-hw-prevista',     hwOrcPrevista, 'amber');
+  setStat('fin-hw-prevista', hwOrcPrevista, 'amber');
   const elHwApr = document.getElementById('fin-hw-aprovados');
   if (elHwApr) { elHwApr.textContent = hwAprov.length; elHwApr.style.color = 'var(--teal)'; }
   const elHwAprSub = document.getElementById('fin-hw-aprovados-sub');
   if (elHwAprSub) elHwAprSub.textContent = hwAprov.length > 0 ? brl(hwOrcPrevista) + ' em aberto' : 'Nenhum aprovado';
-  setStat('fin-hw-total-orcado', hwTotalOrc,    'green');
-  setStat('fin-hw-ticket',       hwTicketFin,   'purple2');
 
   // Resumo entradas por categoria
   const catEnt = {};
@@ -7051,6 +7397,278 @@ function renderControle(){
         <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">${esc(k)}</div>
         <div style="font-size:16px;font-weight:800;color:var(--${pgtoColors[k]||'text'});font-family:var(--mono)">${brl(v)}</div>
       </div>`).join('') || '<p style="font-size:12px;color:var(--muted)">Nenhum pagamento registrado.</p>';
+}
+
+// ── GRÁFICOS ──────────────────────────────────────────────
+let _charts = {};
+
+function _destroyChart(id) {
+  if (_charts[id]) { try { _charts[id].destroy(); } catch(e){} delete _charts[id]; }
+}
+
+function _populaAnoSelect(elId) {
+  const el = document.getElementById(elId);
+  if (!el || el.options.length) return;
+  const anoAtual = new Date().getFullYear();
+  for (let a = anoAtual - 2; a <= anoAtual + 1; a++) {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a;
+    if (a === anoAtual) o.selected = true;
+    el.appendChild(o);
+  }
+}
+
+function renderGraficos() {
+  _populaAnoSelect('graf-ano-receita');
+  _populaAnoSelect('graf-ano-lucro');
+
+  const anoR = parseInt(document.getElementById('graf-ano-receita').value) || new Date().getFullYear();
+  const anoL = parseInt(document.getElementById('graf-ano-lucro').value)   || new Date().getFullYear();
+  const mLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const liq = e => Number(e.liquido ?? e.liq ?? e.valor ?? 0);
+  const pad = n => String(n).padStart(2,'0');
+
+  // ─ Receita mensal
+  const dadosReceita = mLabels.map((_,i) => {
+    const pref = `${anoR}-${pad(i+1)}`;
+    return DB.entradas.filter(e=>(e.data||'').startsWith(pref)).reduce((s,e)=>s+liq(e),0);
+  });
+  _destroyChart('receita');
+  const ctxR = document.getElementById('graf-receita').getContext('2d');
+  _charts.receita = new Chart(ctxR, {
+    type: 'bar',
+    data: {
+      labels: mLabels,
+      datasets: [{
+        label: 'Receita (R$)',
+        data: dadosReceita,
+        backgroundColor: 'rgba(20,184,166,.55)',
+        borderColor: 'rgb(20,184,166)',
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: _chartOpts('Receita mensal ' + anoR)
+  });
+
+  // ─ Lucro mensal (receita − saídas do mesmo mês)
+  const dadosLucro = mLabels.map((_,i) => {
+    const pref = `${anoL}-${pad(i+1)}`;
+    const r = DB.entradas.filter(e=>(e.data||'').startsWith(pref)).reduce((s,e)=>s+liq(e),0);
+    const s = DB.saidas.filter(x=>(x.data||'').startsWith(pref)).reduce((s,x)=>s+(Number(x.valor)||0),0);
+    return r - s;
+  });
+  _destroyChart('lucro');
+  const ctxL = document.getElementById('graf-lucro').getContext('2d');
+  _charts.lucro = new Chart(ctxL, {
+    type: 'bar',
+    data: {
+      labels: mLabels,
+      datasets: [{
+        label: 'Lucro (R$)',
+        data: dadosLucro,
+        backgroundColor: dadosLucro.map(v => v >= 0 ? 'rgba(34,197,94,.55)' : 'rgba(239,68,68,.45)'),
+        borderColor:     dadosLucro.map(v => v >= 0 ? 'rgb(34,197,94)'       : 'rgb(239,68,68)'),
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: _chartOpts('Lucro mensal ' + anoL)
+  });
+
+  // ─ Entradas x Saídas — últimos 6 meses
+  const hoje6 = new Date();
+  const ult6 = Array.from({length:6}, (_,i) => {
+    const d = new Date(hoje6.getFullYear(), hoje6.getMonth() - (5 - i), 1);
+    return { label: mLabels[d.getMonth()] + '/' + String(d.getFullYear()).slice(2), pref: `${d.getFullYear()}-${pad(d.getMonth()+1)}` };
+  });
+  _destroyChart('entradasSaidas');
+  const ctxES = document.getElementById('graf-entradas-saidas').getContext('2d');
+  _charts.entradasSaidas = new Chart(ctxES, {
+    type: 'bar',
+    data: {
+      labels: ult6.map(x=>x.label),
+      datasets: [
+        {
+          label: 'Entradas',
+          data: ult6.map(x => DB.entradas.filter(e=>(e.data||'').startsWith(x.pref)).reduce((s,e)=>s+liq(e),0)),
+          backgroundColor: 'rgba(20,184,166,.55)', borderColor:'rgb(20,184,166)', borderWidth:1.5, borderRadius:4,
+        },
+        {
+          label: 'Saídas',
+          data: ult6.map(x => DB.saidas.filter(s=>(s.data||'').startsWith(x.pref)).reduce((s,e)=>s+(Number(e.valor)||0),0)),
+          backgroundColor: 'rgba(239,68,68,.45)', borderColor:'rgb(239,68,68)', borderWidth:1.5, borderRadius:4,
+        }
+      ]
+    },
+    options: _chartOpts('Entradas × Saídas')
+  });
+}
+
+function _chartOpts(title) {
+  return {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+      tooltip: {
+        callbacks: { label: ctx => ' R$ ' + Number(ctx.raw||0).toFixed(2).replace('.',',') }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#64748b', font:{size:10} }, grid: { color: 'rgba(255,255,255,.04)' } },
+      y: { ticks: { color: '#64748b', font:{size:10}, callback: v => 'R$' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0}) }, grid: { color: 'rgba(255,255,255,.04)' } }
+    }
+  };
+}
+
+// ── RELATÓRIOS ────────────────────────────────────────────
+function renderRelatorios() {
+  const liq = e => Number(e.liquido ?? e.liq ?? e.valor ?? 0);
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // ─ Lucro por categoria (entradas por cat - saídas por cat)
+  const catEnt = {}, catSai = {};
+  DB.entradas.forEach(e => { catEnt[e.cat] = (catEnt[e.cat]||0) + liq(e); });
+  DB.saidas.forEach(s   => { catSai[s.cat] = (catSai[s.cat]||0) + (Number(s.valor)||0); });
+  const cats = [...new Set([...Object.keys(catEnt), ...Object.keys(catSai)])];
+  const relCatEl = document.getElementById('rel-cat');
+  if (!cats.length) {
+    relCatEl.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:8px 0">Sem dados.</p>';
+  } else {
+    const maxVal = Math.max(...cats.map(c => Math.abs((catEnt[c]||0) - (catSai[c]||0))), 1);
+    relCatEl.innerHTML = cats.sort((a,b) => ((catEnt[b]||0)-(catSai[b]||0)) - ((catEnt[a]||0)-(catSai[a]||0))).map(c => {
+      const rec  = catEnt[c]||0, sai = catSai[c]||0, luc = rec - sai;
+      const pct  = Math.min(100, Math.abs(luc)/maxVal*100).toFixed(0);
+      return `<div style="padding:9px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600">${esc(c)}</span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${luc>=0?'var(--green)':'var(--red)'}">${luc>=0?'+':''}${brl(luc)}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Rec: ${brl(rec)} · Desp: ${brl(sai)}</div>
+        <div style="height:3px;background:var(--border);border-radius:99px">
+          <div style="height:3px;width:${pct}%;background:${luc>=0?'var(--green)':'var(--red)'};border-radius:99px"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─ Receita por serviço (entradas com osId ou cat=Serviços)
+  const svcMap = {};
+  DB.entradas.filter(e => e.cat === 'Serviços' || e.osId).forEach(e => {
+    const key = e.osNum ? `OS ${e.osNum}` : (e.desc || 'Sem descrição');
+    svcMap[key] = (svcMap[key]||0) + liq(e);
+  });
+  const relSvcEl = document.getElementById('rel-servico');
+  if (!Object.keys(svcMap).length) {
+    relSvcEl.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:8px 0">Sem receitas de serviço registradas.</p>';
+  } else {
+    const total = Object.values(svcMap).reduce((a,b)=>a+b,0);
+    relSvcEl.innerHTML = Object.entries(svcMap).sort((a,b)=>b[1]-a[1]).slice(0,15).map(([k,v]) => {
+      const pct = total > 0 ? (v/total*100).toFixed(0) : 0;
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:11px;color:var(--muted2);max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k)}</span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--teal)">${brl(v)}</span>
+        </div>
+        <div style="height:3px;background:var(--border);border-radius:99px">
+          <div style="height:3px;width:${pct}%;background:var(--teal);border-radius:99px"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─ Lucro por produto (Vendas concluídas com custo vs vlVenda)
+  const prodMap = {};
+  (DB.vendas||[]).filter(v => v.status === 'Concluída').forEach(v => {
+    const ep    = v.estoqueId ? (DB.estoque||[]).find(x=>x.id===v.estoqueId) : null;
+    const custo = ep ? (Number(ep.vlPago||ep.custo||0)) : (Number(v.custo)||0);
+    const venda = Number(v.valor||v.vlVenda||0);
+    const lucro = venda - custo;
+    const nome  = ep ? (ep.nome || v.produto) : (v.produto || 'Produto sem nome');
+    if (!prodMap[nome]) prodMap[nome] = { lucro:0, cnt:0 };
+    prodMap[nome].lucro += lucro;
+    prodMap[nome].cnt   += 1;
+  });
+  const relProdEl = document.getElementById('rel-produto');
+  if (!Object.keys(prodMap).length) {
+    relProdEl.innerHTML = '<p style="font-size:12px;color:var(--muted);padding:8px 0">Sem vendas concluídas registradas.</p>';
+  } else {
+    const maxLuc = Math.max(...Object.values(prodMap).map(x=>Math.abs(x.lucro)),1);
+    relProdEl.innerHTML = Object.entries(prodMap).sort((a,b)=>b[1].lucro-a[1].lucro).slice(0,15).map(([k,v]) => {
+      const pct = Math.min(100,(Math.abs(v.lucro)/maxLuc*100)).toFixed(0);
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:11px;color:var(--muted2);max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k)} <span style="color:var(--muted);font-size:10px">(${v.cnt}×)</span></span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:700;color:${v.lucro>=0?'var(--green)':'var(--red)'}">${v.lucro>=0?'+':''}${brl(v.lucro)}</span>
+        </div>
+        <div style="height:3px;background:var(--border);border-radius:99px">
+          <div style="height:3px;width:${pct}%;background:${v.lucro>=0?'var(--green)':'var(--red)'};border-radius:99px"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─ Fluxo futuro
+  // Receitas futuras: OS finalizadas/entregues sem entrada no financeiro
+  const osSemReceita = (DB.ordens||[]).filter(o =>
+    (o.status === 'finalizado' || o.status === 'entregue') &&
+    o.pagamento !== 'pago' &&
+    !(DB.entradas||[]).find(e => e.osId === o.id)
+  );
+  const totalFutRec = osSemReceita.reduce((s,o) => s + (Number(o.total)||0), 0);
+  document.getElementById('rel-fut-receitas').textContent = brl(totalFutRec);
+  document.getElementById('rel-fut-receitas-sub').textContent = `${osSemReceita.length} OS${osSemReceita.length !== 1 ? 's' : ''} sem receita lançada`;
+
+  // Parcelas futuras: entradas parceladas — valor restante ainda não recebido
+  const totalFutParc = (DB.entradas||[])
+    .filter(e => (e.parcelas||1) > 1)
+    .reduce((s,e) => {
+      const porParc = liq(e) / (e.parcelas||1);
+      // Assume que parcelas do mês já passado foram recebidas, calcula restantes
+      const dataBase = new Date(e.data + 'T00:00:00');
+      let recebidas = 0;
+      for (let i = 0; i < e.parcelas; i++) {
+        const venc = new Date(dataBase.getFullYear(), dataBase.getMonth() + i, dataBase.getDate());
+        if (venc <= new Date()) recebidas++;
+      }
+      const restantes = Math.max(0, (e.parcelas||1) - recebidas);
+      return s + (porParc * restantes);
+    }, 0);
+  document.getElementById('rel-fut-parcelas').textContent = brl(totalFutParc);
+  const parcsAtivas = (DB.entradas||[]).filter(e=>(e.parcelas||1)>1).length;
+  document.getElementById('rel-fut-parcelas-sub').textContent = `${parcsAtivas} entrada(s) parcelada(s) em aberto`;
+
+  // Despesas futuras: saídas com data futura
+  const saidasFut = (DB.saidas||[]).filter(s => (s.data||'') > hoje);
+  const totalFutDesp = saidasFut.reduce((s,x)=>s+(Number(x.valor)||0),0);
+  document.getElementById('rel-fut-despesas').textContent = brl(totalFutDesp);
+  document.getElementById('rel-fut-despesas-sub').textContent = `${saidasFut.length} saída(s) com data futura`;
+
+  // Lista combinada de futuros
+  const listaFut = [
+    ...osSemReceita.map(o => ({
+      tipo: 'receita', label: `OS ${o.num} — ${o.cliente||''}`, valor: Number(o.total)||0, data: o.criadoEm||'', obs: o.equip||''
+    })),
+    ...saidasFut.map(s => ({
+      tipo: 'despesa', label: s.desc, valor: Number(s.valor)||0, data: s.data, obs: s.cat
+    })),
+  ].sort((a,b) => (a.data||'').localeCompare(b.data||''));
+
+  const listaEl = document.getElementById('rel-fut-lista');
+  if (!listaFut.length) {
+    listaEl.innerHTML = '<div class="empty-state"><p>Nenhum item futuro pendente.</p></div>';
+  } else {
+    listaEl.innerHTML = listaFut.map(item => `
+      <div class="fluxo-row">
+        <span class="fluxo-date">${fmtData(item.data)||'—'}</span>
+        <div>
+          <div style="font-size:13px">${esc(item.label)}</div>
+          ${item.obs ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${esc(item.obs)}</div>` : ''}
+        </div>
+        <span class="${item.tipo==='receita'?'entrada-badge':'saida-badge'}">${item.tipo==='receita'?'A receber':'Despesa'}</span>
+        <span class="${item.tipo==='receita'?'val-pos':'val-neg'}">${item.tipo==='receita'?'+':'-'}${brl(item.valor)}</span>
+      </div>`).join('');
+  }
 }
 
 // ── Inicializar datas dos formulários ──
@@ -7647,9 +8265,10 @@ function salvarContrato() {
 
   save('contratos');
   closeModal('modal-contrato');
-  renderContratos();
-  renderDashboard();
+  try { renderContratos(); } catch(e) {}
+  try { renderDashboard(); } catch(e) {}
   if (editId) toast('Contrato atualizado!');
+  setTimeout(() => flushSaveQueue().catch(e => console.error('sync ct:', e)), 100);
 }
 
 function editarContrato(id) {
@@ -8198,17 +8817,16 @@ function vdDarBaixaEstoque(estoqueId, vendaNum, clienteNome) {
   if (!estoqueId) return false;
   const p = (DB.estoque || []).find(x => x.id === estoqueId);
   if (!p) return false;
-  if (p.status === 'Vendido') return false; // já foi
+  if (p.status === 'Vendido') return false;
   p.status      = 'Vendido';
   p.vendaRef    = vendaNum;
   p.vendidoPara = clienteNome;
   p.vendidoEm   = new Date().toISOString().split('T')[0];
   save('estoque');
-  renderEstoque();
+  try { renderEstoque(); } catch(e) { /* página de estoque pode não estar ativa */ }
   return true;
 }
 
-/** Restaura o estoque se uma venda Concluída vinculada for excluída */
 function vdRestaurarEstoque(estoqueId) {
   if (!estoqueId) return;
   const p = (DB.estoque || []).find(x => x.id === estoqueId);
@@ -8218,117 +8836,145 @@ function vdRestaurarEstoque(estoqueId) {
   p.vendidoPara = null;
   p.vendidoEm   = null;
   save('estoque');
-  renderEstoque();
+  try { renderEstoque(); } catch(e) { /* página de estoque pode não estar ativa */ }
 }
 
 // ══════════════════════════════════════════════════════════════
 
 function salvarVenda() {
-  const num     = document.getElementById('vd-num').value.trim();
-  const produto = document.getElementById('vd-produto').value.trim();
-  const valor   = parseFloat(document.getElementById('vd-valor').value);
+  // Previne duplo clique
+  const btnSalvar = document.getElementById('btn-salvar-venda');
+  if (btnSalvar) { btnSalvar.disabled = true; btnSalvar.textContent = 'Salvando...'; }
+
+  // ── Leitura dos campos ──────────────────────────────────
+  const num      = document.getElementById('vd-num').value.trim();
+  const produto  = document.getElementById('vd-produto').value.trim();
+  const valor    = parseFloat(document.getElementById('vd-valor').value);
   const clienteInput = document.getElementById('vd-cliente-input').value.trim();
-  const clienteId    = AC_STATE['vd'].clienteId;
-  let clienteNome    = clienteInput;
+  const clienteId    = AC_STATE['vd']?.clienteId || null;
+  let   clienteNome  = clienteInput;
   if (clienteId) {
-    const c = DB.clientes.find(x => x.id === clienteId);
+    const c = (DB.clientes||[]).find(x => x.id === clienteId);
     if (c) clienteNome = c.nome;
   }
 
   if (!num || !clienteNome || !produto || isNaN(valor) || valor <= 0) {
-    toast('Preencha os campos obrigatórios (nº, cliente, produto, valor)', 'error'); return;
+    toast('Preencha os campos obrigatórios (nº, cliente, produto, valor)', 'error');
+    if (btnSalvar) { btnSalvar.disabled = false; btnSalvar.textContent = 'Salvar Venda'; }
+    return;
   }
 
-  const editId    = document.getElementById('vd-edit-id').value;
-  const estoqueId = document.getElementById('vd-estoque-id').value;
+  const editId    = document.getElementById('vd-edit-id').value || '';
+  const estoqueId = document.getElementById('vd-estoque-id').value || '';
+  const status    = document.getElementById('vd-status').value || 'Concluída';
+  const pgto      = document.getElementById('vd-pgto').value || 'PIX';
 
   const venda = {
-    id:         editId ? editId : crypto.randomUUID(),
+    id:        editId || crypto.randomUUID(),
     num,
-    data:       document.getElementById('vd-data').value,
-    canal:      document.getElementById('vd-canal').value,
-    cliente:    clienteNome,
-    clienteId:  clienteId,
+    data:      document.getElementById('vd-data').value || '',
+    canal:     document.getElementById('vd-canal').value || '',
+    cliente:   clienteNome,
+    clienteId: clienteId,
     produto,
-    categoria:  document.getElementById('vd-categoria').value,
-    obs:        document.getElementById('vd-obs').value.trim(),
+    categoria: document.getElementById('vd-categoria').value || '',
+    obs:       document.getElementById('vd-obs').value.trim(),
     valor,
-    custo:      parseFloat(document.getElementById('vd-custo').value) || 0,
-    pgto:       document.getElementById('vd-pgto').value,
-    parcelas:   parseInt(document.getElementById('vd-parcelas').value),
-    status:     document.getElementById('vd-status').value,
-    estoqueId:  estoqueId || null,
-    criado:     editId ? (DB.vendas.find(v=>v.id===editId)?.criado || new Date().toLocaleDateString('pt-BR')) : new Date().toLocaleDateString('pt-BR'),
+    custo:     parseFloat(document.getElementById('vd-custo').value) || 0,
+    pgto,
+    parcelas:  parseInt(document.getElementById('vd-parcelas').value) || 1,
+    status,
+    estoqueId: estoqueId || null,
+    criado:    editId
+      ? ((DB.vendas||[]).find(v => v.id === editId)?.criado || new Date().toLocaleDateString('pt-BR'))
+      : new Date().toLocaleDateString('pt-BR'),
   };
+
+  // ── FECHAR O MODAL IMEDIATAMENTE ────────────────────────
+  // Faz isso antes de qualquer operação que possa lançar erro
+  closeModal('modal-venda');
+  try { acResetar('vd'); } catch(e) {}
+  try {
+    const blocoP = document.getElementById('vd-bloco-permuta');
+    if (blocoP) blocoP.style.display = 'none';
+  } catch(e) {}
+
+  // ── Processar dados ─────────────────────────────────────
+  if (!DB.vendas) DB.vendas = [];
 
   if (editId) {
     const vendaAnt = DB.vendas.find(v => v.id === editId);
-    // Se mudou de Concluída para outra, restaura o estoque
-    if (vendaAnt?.status === 'Concluída' && venda.status !== 'Concluída' && vendaAnt.estoqueId) {
-      vdRestaurarEstoque(vendaAnt.estoqueId);
-    }
-    // Se passou a ser Concluída agora, dá baixa
-    if (venda.status === 'Concluída' && vendaAnt?.status !== 'Concluída' && estoqueId) {
-      vdDarBaixaEstoque(estoqueId, venda.num, clienteNome);
-    }
+    try {
+      if (vendaAnt?.status === 'Concluída' && status !== 'Concluída' && vendaAnt.estoqueId)
+        vdRestaurarEstoque(vendaAnt.estoqueId);
+      if (status === 'Concluída' && vendaAnt?.status !== 'Concluída' && estoqueId)
+        vdDarBaixaEstoque(estoqueId, num, clienteNome);
+    } catch(e) { console.error('estoque edit:', e); }
     DB.vendas = DB.vendas.map(v => v.id === editId ? venda : v);
   } else {
-    confirmarNumVenda();
+    try { confirmarNumVenda(); } catch(e) {}
     DB.vendas.push(venda);
-    addHistorico('venda_criada', { ref: venda.num, cliente: venda.cliente, produto: venda.produto, valor: venda.valor, pgto: venda.pgto });
 
-    // ── Permuta: cadastrar produto recebido no estoque ──────
-    if (venda.pgto === 'Permuta') {
-      const permNome  = (document.getElementById('vd-perm-nome')?.value || '').trim();
-      const permValor = parseFloat(document.getElementById('vd-perm-valor')?.value) || 0;
-      if (permNome && permValor > 0) {
-        const permId = vdCriarEstoquePermuta(venda.num, clienteNome);
-        if (permId) {
-          venda.permutaEstoqueId = permId;
-          venda.permutaNome      = permNome;
-          venda.permutaValor     = permValor;
-          toast(`🔄 Produto da permuta "${permNome}" adicionado ao estoque!`);
+    try { addHistorico('venda_criada', { ref: venda.num, cliente: venda.cliente, produto: venda.produto, valor: venda.valor, pgto }); } catch(e) {}
+
+    // Permuta
+    try {
+      if (pgto === 'Permuta') {
+        const permNome  = (document.getElementById('vd-perm-nome')?.value || '').trim();
+        const permValor = parseFloat(document.getElementById('vd-perm-valor')?.value) || 0;
+        if (permNome && permValor > 0) {
+          const permId = vdCriarEstoquePermuta(venda.num, clienteNome);
+          if (permId) {
+            venda.permutaEstoqueId = permId;
+            venda.permutaNome      = permNome;
+            venda.permutaValor     = permValor;
+          }
+        }
+        vdResetPermuta();
+      }
+    } catch(e) { console.error('permuta:', e); }
+
+    // Baixa no estoque
+    try {
+      if (status === 'Concluída' && estoqueId)
+        vdDarBaixaEstoque(estoqueId, num, clienteNome);
+    } catch(e) { console.error('baixa estoque:', e); }
+
+    // Lançar no financeiro
+    try {
+      if (status === 'Concluída') {
+        if (!DB.entradas) DB.entradas = [];
+        const jaExiste = DB.entradas.some(e => e.vendaId === venda.id);
+        if (!jaExiste) {
+          DB.entradas.push({
+            id:       gerarIdFin(),
+            cat:      'Vendas',
+            desc:     `Venda ${num} — ${produto} (${clienteNome})`,
+            data:     venda.data || new Date().toISOString().split('T')[0],
+            valor:    venda.valor,
+            pgto,
+            parcelas: venda.parcelas || 1,
+            taxa:     0,
+            liquido:  venda.valor,
+            permuta:  null,
+            vendaId:  venda.id,
+            vendaNum: num,
+            origem:   'venda',
+          });
+          save('entradas');
         }
       }
-      vdResetPermuta();
-    }
-
-    // Baixa automática no estoque se venda já nasce Concluída
-    if (venda.status === 'Concluída' && estoqueId) {
-      const baixou = vdDarBaixaEstoque(estoqueId, venda.num, clienteNome);
-      if (baixou) toast('📦 Baixa no estoque realizada automaticamente!');
-    }
-
-    // Lança automaticamente no financeiro se venda já está Concluída
-    if (venda.status === 'Concluída') {
-      const jaExiste = (DB.entradas||[]).some(e => e.vendaId === venda.id);
-      if (!jaExiste) {
-        const entradaVenda = {
-          id:       gerarIdFin(),
-          cat:      'Vendas',
-          desc:     `Venda ${venda.num} — ${venda.produto} (${venda.cliente})`,
-          data:     venda.data || new Date().toISOString().split('T')[0],
-          valor:    venda.valor,
-          pgto:     venda.pgto,
-          parcelas: venda.parcelas || 1,
-          taxa:     0,
-          liquido:  venda.valor,
-          permuta:  null,
-          vendaId:  venda.id,
-          vendaNum: venda.num,
-          origem:   'venda',
-        };
-        DB.entradas.push(entradaVenda);
-        save('entradas');
-      }
-    }
+    } catch(e) { console.error('financeiro venda:', e); }
   }
 
+  // ── Salvar e atualizar tela ─────────────────────────────
   save('vendas');
-  closeModal('modal-venda');
-  renderVendas();
-  renderDashboard();
+  try { renderVendas(); } catch(e) { console.error('renderVendas:', e); }
+  try { renderDashboard(); } catch(e) { console.error('renderDashboard:', e); }
   toast(editId ? 'Venda atualizada!' : 'Venda registrada!');
+
+  // Sync Supabase assíncrono — por último, isolado
+  setTimeout(() => { try { flushSaveQueue(); } catch(e) {} }, 200);
 }
 
 function editarVenda(id) {
@@ -8387,40 +9033,47 @@ function excluirVenda(id) {
   const v = DB.vendas.find(x => x.id === id);
   if (!v) return;
 
-  // Monta aviso com o que será removido
-  const temFinanceiro  = (DB.entradas||[]).some(e => e.vendaId === id);
-  const temPermuta     = !!v.permutaEstoqueId;
-  let aviso = `Remover a venda ${v.num}?`;
-  if (temFinanceiro) aviso += '\n\n💰 O lançamento no financeiro será removido.';
+  // Monta aviso único com tudo que será removido
+  const temFinanceiro = (DB.entradas||[]).some(e => e.vendaId === id);
+  const temEstoque    = v.status === 'Concluída' && !!v.estoqueId;
+  const temPermuta    = !!v.permutaEstoqueId;
+
+  let aviso = `Remover a venda ${v.num}?\n`;
+  if (temFinanceiro) aviso += '\n💰 O lançamento no financeiro será removido.';
+  if (temEstoque)    aviso += '\n📦 O produto voltará para "Em estoque".';
   if (temPermuta)    aviso += `\n🔄 O produto da permuta "${v.permutaNome || ''}" será removido do estoque.`;
+
   if (!confirm(aviso)) return;
 
-  // 1. Remover entrada financeira vinculada a esta venda
+  // 1. Remover entrada financeira vinculada
   const antesEnt = (DB.entradas||[]).length;
   DB.entradas = (DB.entradas||[]).filter(e => e.vendaId !== id);
   if (DB.entradas.length !== antesEnt) save('entradas');
 
-  // 2. Se tinha produto de estoque vendido, perguntar se restaura
-  if (v.status === 'Concluída' && v.estoqueId) {
-    if (confirm('Esta venda tinha um produto do estoque vinculado.\nDeseja restaurar o produto para "Em estoque"?')) {
-      vdRestaurarEstoque(v.estoqueId);
-      toast('📦 Produto vendido restaurado ao estoque.');
-    }
+  // 2. Restaurar produto no estoque (sem confirm extra)
+  if (temEstoque) {
+    vdRestaurarEstoque(v.estoqueId);
   }
 
   // 3. Remover produto recebido na permuta do estoque
   if (temPermuta) {
     DB.estoque = (DB.estoque||[]).filter(p => p.id !== v.permutaEstoqueId);
     save('estoque');
-    if (typeof renderEstoque === 'function') renderEstoque();
   }
 
-  // 4. Remover a venda
+  // 4. Remover a venda e salvar
   DB.vendas = DB.vendas.filter(x => x.id !== id);
   save('vendas');
+
+  // 5. Re-renderizar tudo
   renderVendas();
+  if (typeof renderEstoque === 'function') renderEstoque();
   renderDashboard();
-  toast('Venda e registros vinculados removidos.');
+
+  const msgs = ['Venda removida.'];
+  if (temFinanceiro) msgs.push('Financeiro atualizado.');
+  if (temEstoque)    msgs.push('Produto restaurado ao estoque.');
+  toast(msgs.join(' '));
 }
 
 const STATUS_VENDA_COR = {
@@ -8611,7 +9264,7 @@ function ctDarBaixaEstoque(estoqueId, contratoNum, clienteNome) {
   p.vendidoPara = clienteNome;
   p.vendidoEm   = new Date().toISOString().split('T')[0];
   save('estoque');
-  if (typeof renderEstoque === 'function') renderEstoque();
+  try { if (typeof renderEstoque === 'function') renderEstoque(); } catch(e) {}
   return true;
 }
 
@@ -8624,7 +9277,7 @@ function ctRestaurarEstoque(estoqueId) {
   p.vendidoPara = null;
   p.vendidoEm   = null;
   save('estoque');
-  if (typeof renderEstoque === 'function') renderEstoque();
+  try { if (typeof renderEstoque === 'function') renderEstoque(); } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9134,10 +9787,10 @@ function hwSalvar() {
   }
   save('orcHw');
   closeModal('modal-orc-hw');
-  // Rederizar lista de orçamentos se estiver na aba
-  if (typeof renderOrcamentos === 'function') renderOrcamentos();
-  hwRenderLista();
+  try { if (typeof renderOrcamentos === 'function') renderOrcamentos(); } catch(e) {}
+  try { hwRenderLista(); } catch(e) {}
   toast(hwEditId ? 'Orçamento atualizado!' : '🖥️ Orçamento de hardware salvo!');
+  setTimeout(() => flushSaveQueue().catch(e => console.error('sync hw:', e)), 100);
 }
 
 // ── Excluir ──────────────────────────────────────────────────
